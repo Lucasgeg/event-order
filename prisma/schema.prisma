@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  id            String        @id @default(cuid())
+  name          String
+  subCategories SubCategory[]
+  products      Product[]
+}
+
+model SubCategory {
+  id         String    @id @default(cuid())
+  name       String
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
+  products   Product[]
+}
+
+model Product {
+  id            String       @id @default(cuid())
+  designation   String
+  price         Float
+  category      Category     @relation(fields: [categoryId], references: [id])
+  categoryId    String
+  subCategory   SubCategory? @relation(fields: [subCategoryId], references: [id])
+  subCategoryId String?
+  orderItems    OrderItem[]
+}
+
+model AvailableDay {
+  id   String   @id @default(cuid())
+  date DateTime @unique
+}
+
+model Order {
+  id         String      @id @default(cuid())
+  clientName String
+  pickupDate DateTime
+  createdAt  DateTime    @default(now())
+  items      OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+}

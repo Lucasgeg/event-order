@@ -26,6 +26,11 @@ export interface Category {
   subCategories?: SubCategory[];
 }
 
+export interface AvailableDay {
+  id: string;
+  date: string; // ISO Date string
+}
+
 export interface OrderItem {
   product: Product;
   quantity: number;
@@ -37,8 +42,4 @@ export interface Order {
   items: OrderItem[];
   pickupDate: string; // ISO Date string
   createdAt: string;
-}
-
-export interface AvailableDay {
-  date: string; // ISO Date string
 }

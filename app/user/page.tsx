@@ -1,19 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useApp } from "../context/AppContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Product, OrderItem } from "../types";
 
-export default function UserPage() {
-  const { user, logout, products, categories, availableDays, addOrder } =
-    useApp();
+function UserPageContent() {
+  const {
+    user,
+    logout,
+    products,
+    categories,
+    subCategories,
+    availableDays,
+    addOrder,
+    updateOrder,
+  } = useApp();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get("orderId");
 
   const [clientName, setClientName] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [cart, setCart] = useState<OrderItem[]>([]);
+  const [loadingOrder, setLoadingOrder] = useState(false);
 
   // Navigation state
   const [view, setView] = useState<"categories" | "subcategories" | "products">(
@@ -24,6 +35,35 @@ export default function UserPage() {
     null
   );
   const [isOrderFullScreen, setIsOrderFullScreen] = useState(false);
+
+  useEffect(() => {
+    if (orderId) {
+      const fetchOrder = async () => {
+        setLoadingOrder(true);
+        try {
+          const response = await fetch(`/api/orders/${orderId}`);
+          if (response.ok) {
+            const order = await response.json();
+            setClientName(order.clientName);
+            // Ensure date format matches input (YYYY-MM-DD)
+            const date = new Date(order.pickupDate);
+            const formattedDate = date.toISOString().split("T")[0];
+            setSelectedDate(formattedDate);
+
+            // Map items to cart format
+            // Note: We need to make sure products are loaded or we have full product info in order items
+            // The API returns items with product included.
+            setCart(order.items);
+          }
+        } catch (error) {
+          console.error("Error fetching order:", error);
+        } finally {
+          setLoadingOrder(false);
+        }
+      };
+      fetchOrder();
+    }
+  }, [orderId]);
 
   if (!user) {
     // router.push('/');
@@ -72,7 +112,7 @@ export default function UserPage() {
     );
   };
 
-  const handleSaveOrder = () => {
+  const handleSaveOrder = async () => {
     if (!clientName || !selectedDate || cart.length === 0) {
       alert(
         "Veuillez remplir le nom du client, la date et ajouter des produits."
@@ -80,32 +120,37 @@ export default function UserPage() {
       return;
     }
 
-    addOrder({
-      id: Date.now().toString(),
-      clientName,
-      items: cart,
-      pickupDate: selectedDate,
-      createdAt: new Date().toISOString(),
-    });
-
-    alert("Commande enregistrée !");
-    // Reset form
-    setClientName("");
-    setCart([]);
-    setSelectedDate("");
-    setView("categories");
-    setSelectedCategory(null);
-    setSelectedSubCategory(null);
+    if (orderId) {
+      await updateOrder(orderId, {
+        clientName,
+        items: cart,
+        pickupDate: selectedDate,
+      });
+      alert("Commande modifiée !");
+      router.push("/admin"); // Redirect back to admin after edit
+    } else {
+      await addOrder({
+        clientName,
+        items: cart,
+        pickupDate: selectedDate,
+      });
+      alert("Commande enregistrée !");
+      // Reset form
+      setClientName("");
+      setCart([]);
+      setSelectedDate("");
+      setView("categories");
+      setSelectedCategory(null);
+      setSelectedSubCategory(null);
+    }
   };
 
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    const category = categories.find((c) => c.id === categoryId);
-    if (
-      category &&
-      category.subCategories &&
-      category.subCategories.length > 0
-    ) {
+    const hasSubCategories = subCategories.some(
+      (s) => s.categoryId === categoryId
+    );
+    if (hasSubCategories) {
       setView("subcategories");
     } else {
       setView("products");
@@ -119,12 +164,10 @@ export default function UserPage() {
 
   const handleBack = () => {
     if (view === "products") {
-      const category = categories.find((c) => c.id === selectedCategory);
-      if (
-        category &&
-        category.subCategories &&
-        category.subCategories.length > 0
-      ) {
+      const hasSubCategories = subCategories.some(
+        (s) => s.categoryId === selectedCategory
+      );
+      if (hasSubCategories) {
         setView("subcategories");
         setSelectedSubCategory(null);
       } else {
@@ -145,15 +188,9 @@ export default function UserPage() {
   });
 
   const currentCategory = categories.find((c) => c.id === selectedCategory);
-  const currentSubCategory = currentCategory?.subCategories?.find(
+  const currentSubCategory = subCategories.find(
     (s) => s.id === selectedSubCategory
   );
-
-  const getSubCategoryName = (categoryId: string, subCategoryId?: string) => {
-    if (!subCategoryId) return null;
-    const category = categories.find((c) => c.id === categoryId);
-    return category?.subCategories?.find((s) => s.id === subCategoryId)?.name;
-  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col h-screen overflow-hidden">
@@ -198,65 +235,74 @@ export default function UserPage() {
             {/* Categories View */}
             {view === "categories" && (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => handleCategorySelect(cat.id)}
-                    className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-all text-center border border-gray-200 flex flex-col items-center justify-center gap-4 h-48"
-                  >
-                    <span className="text-2xl font-bold text-gray-800">
-                      {cat.name}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      {cat.subCategories?.length
-                        ? `${cat.subCategories.length} sous-catégories`
-                        : "Produits directs"}
-                    </span>
-                  </button>
-                ))}
+                {categories.map((cat) => {
+                  const catSubCategories = subCategories.filter(
+                    (s) => s.categoryId === cat.id
+                  );
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => handleCategorySelect(cat.id)}
+                      className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-all text-center border border-gray-200 flex flex-col items-center justify-center gap-4 h-48"
+                    >
+                      <span className="text-2xl font-bold text-gray-800">
+                        {cat.name}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {catSubCategories.length
+                          ? `${catSubCategories.length} sous-catégories`
+                          : "Produits directs"}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             )}
 
             {/* Subcategories View */}
             {view === "subcategories" && currentCategory && (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                {currentCategory.subCategories?.map((sub) => (
-                  <button
-                    key={sub.id}
-                    onClick={() => handleSubCategorySelect(sub.id)}
-                    className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-all text-center border border-gray-200 flex flex-col items-center justify-center h-40"
-                  >
-                    <span className="text-xl font-bold text-gray-800">
-                      {sub.name}
-                    </span>
-                  </button>
-                ))}
+                {subCategories
+                  .filter((s) => s.categoryId === currentCategory.id)
+                  .map((sub) => (
+                    <button
+                      key={sub.id}
+                      onClick={() => handleSubCategorySelect(sub.id)}
+                      className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-all text-center border border-gray-200 flex flex-col items-center justify-center h-40"
+                    >
+                      <span className="text-xl font-bold text-gray-800">
+                        {sub.name}
+                      </span>
+                    </button>
+                  ))}
               </div>
             )}
 
             {/* Products View */}
             {view === "products" && (
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredProducts.map((product) => (
-                  <button
-                    key={product.id}
-                    onClick={() => addToCart(product)}
-                    className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow text-left border border-gray-200 flex flex-col h-full"
-                  >
-                    <div className="font-bold text-gray-800 mb-1">
-                      {product.designation}
-                    </div>
-                    <div className="text-sm text-gray-500 mb-2">
-                      {getSubCategoryName(
-                        product.categoryId,
-                        product.subCategoryId
-                      )}
-                    </div>
-                    <div className="mt-auto text-lg font-semibold text-blue-600">
-                      {product.price.toFixed(2)} €
-                    </div>
-                  </button>
-                ))}
+                {filteredProducts.map((product) => {
+                  const subCategory = subCategories.find(
+                    (s) => s.id === product.subCategoryId
+                  );
+                  return (
+                    <button
+                      key={product.id}
+                      onClick={() => addToCart(product)}
+                      className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow text-left border border-gray-200 flex flex-col h-full"
+                    >
+                      <div className="font-bold text-gray-800 mb-1">
+                        {product.designation}
+                      </div>
+                      <div className="text-sm text-gray-500 mb-2">
+                        {subCategory?.name || ""}
+                      </div>
+                      <div className="mt-auto text-lg font-semibold text-blue-600">
+                        {product.price.toFixed(2)} €
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -273,7 +319,7 @@ export default function UserPage() {
           <div className="p-4 md:p-6 border-b border-gray-200 bg-gray-50">
             <div className="flex justify-between items-center mb-2 md:mb-4">
               <h2 className="text-lg font-bold text-gray-800">
-                Nouvelle Commande
+                {orderId ? "Modifier Commande" : "Nouvelle Commande"}
               </h2>
               <button
                 onClick={() => setIsOrderFullScreen(!isOrderFullScreen)}
@@ -382,11 +428,19 @@ export default function UserPage() {
                   : "bg-green-600 hover:bg-green-700 shadow-md"
               }`}
             >
-              Valider la commande
+              {orderId ? "Mettre à jour" : "Valider la commande"}
             </button>
           </div>
         </div>
       </main>
     </div>
+  );
+}
+
+export default function UserPage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <UserPageContent />
+    </Suspense>
   );
 }

@@ -26,11 +26,6 @@ export interface Category {
   subCategories?: SubCategory[];
 }
 
-export interface AvailableDay {
-  id: string;
-  date: string; // ISO Date string
-}
-
 export interface OrderItem {
   product: Product;
   quantity: number;

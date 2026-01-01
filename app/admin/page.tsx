@@ -22,13 +22,11 @@ export default function AdminPage() {
     subCategories,
     addSubCategory,
     deleteSubCategory,
-    availableDays,
-    addAvailableDay,
-    removeAvailableDay,
+    refreshData,
   } = useApp();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "menu" | "products" | "days" | "orders" | "production"
+    "menu" | "products" | "orders" | "production"
   >("menu");
 
   useEffect(() => {
@@ -85,16 +83,6 @@ export default function AdminPage() {
                   Produits
                 </button>
                 <button
-                  onClick={() => setActiveTab("days")}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    activeTab === "days"
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  Jours Disponibles
-                </button>
-                <button
                   onClick={() => setActiveTab("orders")}
                   className={`px-3 py-2 rounded-md text-sm font-medium ${
                     activeTab === "orders"
@@ -129,7 +117,7 @@ export default function AdminPage() {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="mx-auto py-6 sm:px-6 lg:px-8">
         {activeTab === "menu" && (
           <CategoriesManager
             categories={categories}
@@ -139,6 +127,7 @@ export default function AdminPage() {
             subCategories={subCategories}
             addSubCategory={addSubCategory}
             deleteSubCategory={deleteSubCategory}
+            refreshData={refreshData}
           />
         )}
         {activeTab === "products" && (
@@ -151,19 +140,9 @@ export default function AdminPage() {
             deleteProduct={deleteProduct}
           />
         )}
-        {activeTab === "days" && (
-          <DaysManager
-            availableDays={availableDays}
-            addAvailableDay={addAvailableDay}
-            removeAvailableDay={removeAvailableDay}
-          />
-        )}
-        {activeTab === "orders" && (
-          <OrdersManager availableDays={availableDays} />
-        )}
+        {activeTab === "orders" && <OrdersManager />}
         {activeTab === "production" && (
           <ProductionManager
-            availableDays={availableDays}
             categories={categories}
             subCategories={subCategories}
           />
@@ -181,12 +160,47 @@ function CategoriesManager({
   subCategories,
   addSubCategory,
   deleteSubCategory,
+  refreshData,
 }: any) {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newSubCategoryName, setNewSubCategoryName] = useState("");
   const [selectedCategoryForSub, setSelectedCategoryForSub] = useState<
     string | null
   >(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
+    null
+  );
+  const [editingCategoryName, setEditingCategoryName] = useState("");
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+    } else {
+      setSelectedFile(null);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!selectedFile) return;
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    setIsGenerating(true);
+    try {
+      await fetch("/api/generate-menu", {
+        method: "POST",
+        body: formData,
+      });
+    } catch (error) {
+      console.error("Erreur lors de la génération:", error);
+    } finally {
+      setIsGenerating(false);
+      refreshData();
+    }
+  };
 
   const handleAddCategory = () => {
     if (newCategoryName.trim()) {
@@ -194,6 +208,24 @@ function CategoriesManager({
         name: newCategoryName,
       });
       setNewCategoryName("");
+    }
+  };
+
+  const startEditingCategory = (category: Category) => {
+    setEditingCategoryId(category.id);
+    setEditingCategoryName(category.name);
+  };
+
+  const cancelEditingCategory = () => {
+    setEditingCategoryId(null);
+    setEditingCategoryName("");
+  };
+
+  const saveCategoryEdit = (categoryId: string) => {
+    if (editingCategoryName.trim()) {
+      updateCategory({ id: categoryId, name: editingCategoryName });
+      setEditingCategoryId(null);
+      setEditingCategoryName("");
     }
   };
 
@@ -209,96 +241,168 @@ function CategoriesManager({
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-lg font-medium mb-4 text-gray-900">
-        Gestion des Catégories
-      </h2>
-
-      <div className="flex gap-2 mb-6">
-        <input
-          type="text"
-          value={newCategoryName}
-          onChange={(e) => setNewCategoryName(e.target.value)}
-          placeholder="Nouvelle catégorie"
-          className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-black"
-        />
-        <button
-          onClick={handleAddCategory}
-          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-        >
-          Ajouter
-        </button>
+    <div className="space-y-6">
+      <div className="bg-white shadow rounded-lg p-6">
+        <h2 className="text-lg font-medium mb-4 text-gray-900">
+          Génération automatique
+        </h2>
+        <div className="flex items-center gap-4">
+          <input
+            type="file"
+            accept=".pdf"
+            onChange={handleFileSelect}
+            disabled={isGenerating}
+            className="block w-full text-sm text-gray-500
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-md file:border-0
+              file:text-sm file:font-semibold
+              file:bg-blue-50 file:text-blue-700
+              hover:file:bg-blue-100"
+          />
+          <button
+            onClick={handleGenerate}
+            disabled={!selectedFile || isGenerating}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            {isGenerating ? "Traitement..." : "Générer"}
+          </button>
+        </div>
+        <div className="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
+          <p className="text-sm">
+            <span className="font-bold">Note importante :</span> La génération
+            du menu est réalisée par une intelligence artificielle. Il est
+            impératif de vérifier l&apos;exactitude des catégories et produits
+            générés, car l&apos;IA peut commettre des erreurs.
+          </p>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        {categories &&
-          categories.map((category: Category) => (
-            <div
-              key={category.id}
-              className="border border-gray-200 rounded-md p-4"
-            >
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-bold text-gray-800">{category.name}</h3>
-                <button
-                  onClick={() => deleteCategory(category.id)}
-                  className="text-red-600 hover:text-red-800 text-sm"
-                >
-                  Supprimer
-                </button>
-              </div>
+      <div className="bg-white shadow rounded-lg p-6">
+        <h2 className="text-lg font-medium mb-4 text-gray-900">
+          Gestion des Catégories
+        </h2>
 
-              <div className="ml-4">
-                <h4 className="text-sm font-medium text-gray-600 mb-2">
-                  Sous-catégories:
-                </h4>
-                <ul className="list-disc list-inside mb-2 text-gray-700">
-                  {subCategories
-                    .filter((sub: any) => sub.categoryId === category.id)
-                    .map((sub: any) => (
-                      <li
-                        key={sub.id}
-                        className="flex justify-between items-center w-64"
+        <div className="flex gap-2 mb-6">
+          <input
+            type="text"
+            value={newCategoryName}
+            onChange={(e) => setNewCategoryName(e.target.value)}
+            placeholder="Nouvelle catégorie"
+            className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-black"
+          />
+          <button
+            onClick={handleAddCategory}
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+          >
+            Ajouter
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categories &&
+            categories.map((category: Category) => (
+              <div
+                key={category.id}
+                className="border border-gray-200 rounded-md p-4"
+              >
+                <div className="flex justify-between items-center mb-2">
+                  {editingCategoryId === category.id ? (
+                    <div className="flex items-center gap-2 w-full">
+                      <input
+                        type="text"
+                        value={editingCategoryName}
+                        onChange={(e) => setEditingCategoryName(e.target.value)}
+                        className="border border-gray-300 rounded px-2 py-1 text-sm text-black w-full"
+                      />
+                      <button
+                        onClick={() => saveCategoryEdit(category.id)}
+                        className="text-green-600 hover:text-green-800 text-sm"
                       >
-                        <span>{sub.name}</span>
+                        ✓
+                      </button>
+                      <button
+                        onClick={cancelEditingCategory}
+                        className="text-gray-600 hover:text-gray-800 text-sm"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <h3 className="font-bold text-gray-800">
+                        {category.name}
+                      </h3>
+                      <div className="flex gap-2">
                         <button
-                          onClick={() => deleteSubCategory(sub.id)}
-                          className="text-red-500 hover:text-red-700 text-xs"
+                          onClick={() => startEditingCategory(category)}
+                          className="text-blue-600 hover:text-blue-800 text-sm"
                         >
-                          ×
+                          Modifier
                         </button>
-                      </li>
-                    ))}
-                </ul>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Ajouter sous-catégorie"
-                    className="border border-gray-300 rounded-md px-2 py-1 text-sm text-black"
-                    value={
-                      selectedCategoryForSub === category.id
-                        ? newSubCategoryName
-                        : ""
-                    }
-                    onChange={(e) => {
-                      setSelectedCategoryForSub(category.id);
-                      setNewSubCategoryName(e.target.value);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        handleAddSubCategory(category.id);
+                        <button
+                          onClick={() => deleteCategory(category.id)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="ml-4">
+                  <h4 className="text-sm font-medium text-gray-600 mb-2">
+                    Sous-catégories:
+                  </h4>
+                  <ul className="list-disc list-inside mb-2 text-gray-700">
+                    {subCategories
+                      .filter((sub: any) => sub.categoryId === category.id)
+                      .map((sub: any) => (
+                        <li
+                          key={sub.id}
+                          className="flex justify-between items-center w-full"
+                        >
+                          <span>{sub.name}</span>
+                          <button
+                            onClick={() => deleteSubCategory(sub.id)}
+                            className="text-red-500 hover:text-red-700 text-xs"
+                          >
+                            ×
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Ajouter sous-catégorie"
+                      className="border border-gray-300 rounded-md px-2 py-1 text-sm text-black"
+                      value={
+                        selectedCategoryForSub === category.id
+                          ? newSubCategoryName
+                          : ""
                       }
-                    }}
-                  />
-                  <button
-                    onClick={() => handleAddSubCategory(category.id)}
-                    className="text-sm bg-gray-200 px-2 rounded hover:bg-gray-300 text-black"
-                  >
-                    +
-                  </button>
+                      onChange={(e) => {
+                        setSelectedCategoryForSub(category.id);
+                        setNewSubCategoryName(e.target.value);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleAddSubCategory(category.id);
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => handleAddSubCategory(category.id)}
+                      className="text-sm bg-gray-200 px-2 rounded hover:bg-gray-300 text-black"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+        </div>
       </div>
     </div>
   );
@@ -313,6 +417,9 @@ function ProductsManager({
   deleteProduct,
 }: any) {
   const [newProduct, setNewProduct] = useState<Partial<Product>>({});
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState<Partial<Product>>({});
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleAddProduct = () => {
     if (newProduct.designation && newProduct.price && newProduct.categoryId) {
@@ -326,11 +433,56 @@ function ProductsManager({
     }
   };
 
+  const startEditing = (product: Product) => {
+    setEditingProductId(product.id);
+    setEditFormData({
+      designation: product.designation,
+      price: product.price,
+      categoryId: product.categoryId,
+      subCategoryId: product.subCategoryId,
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingProductId(null);
+    setEditFormData({});
+  };
+
+  const saveEdit = (productId: string) => {
+    if (!editFormData.categoryId || !editFormData.designation) {
+      return;
+    }
+    const data: Product = {
+      id: productId,
+      categoryId: editFormData.categoryId,
+      designation: editFormData.designation,
+      price: Number(editFormData.price),
+      subCategoryId: editFormData.subCategoryId,
+    };
+    updateProduct(data);
+    setEditingProductId(null);
+    setEditFormData({});
+  };
+
+  const filteredProducts = products.filter((product: Product) =>
+    product.designation.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="bg-white shadow rounded-lg p-6">
       <h2 className="text-lg font-medium mb-4 text-gray-900">
         Gestion des Produits
       </h2>
+
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Rechercher par nom..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="border border-gray-300 rounded-md px-3 py-2 text-black w-full md:w-1/3"
+        />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 bg-gray-50 p-4 rounded-md">
         <input
@@ -416,13 +568,105 @@ function ProductsManager({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {products.map((product: Product) => {
+            {filteredProducts.map((product: Product) => {
+              const isEditing = editingProductId === product.id;
               const category = categories.find(
                 (c: Category) => c.id === product.categoryId
               );
               const subCategory = subCategories.find(
                 (s: any) => s.id === product.subCategoryId
               );
+
+              if (isEditing) {
+                return (
+                  <tr key={product.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <input
+                        type="text"
+                        value={editFormData.designation || ""}
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            designation: e.target.value,
+                          })
+                        }
+                        className="border border-gray-300 rounded px-2 py-1 w-full text-black"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <input
+                        type="number"
+                        value={editFormData.price || ""}
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            price: Number(e.target.value),
+                          })
+                        }
+                        className="border border-gray-300 rounded px-2 py-1 w-24 text-black"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <select
+                        value={editFormData.categoryId || ""}
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            categoryId: e.target.value,
+                            subCategoryId: undefined,
+                          })
+                        }
+                        className="border border-gray-300 rounded-md px-2 py-1 text-black w-full"
+                      >
+                        {categories.map((c: Category) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <select
+                        value={editFormData.subCategoryId || ""}
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            subCategoryId: e.target.value,
+                          })
+                        }
+                        className="border border-gray-300 rounded-md px-2 py-1 text-black w-full"
+                      >
+                        <option value="">Aucune</option>
+                        {subCategories
+                          .filter(
+                            (sub: any) =>
+                              sub.categoryId === editFormData.categoryId
+                          )
+                          .map((sub: any) => (
+                            <option key={sub.id} value={sub.id}>
+                              {sub.name}
+                            </option>
+                          ))}
+                      </select>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                      <button
+                        onClick={() => saveEdit(product.id)}
+                        className="text-green-600 hover:text-green-900"
+                      >
+                        Enregistrer
+                      </button>
+                      <button
+                        onClick={cancelEditing}
+                        className="text-gray-600 hover:text-gray-900"
+                      >
+                        Annuler
+                      </button>
+                    </td>
+                  </tr>
+                );
+              }
+
               return (
                 <tr key={product.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -438,6 +682,12 @@ function ProductsManager({
                     {subCategory?.name || "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => startEditing(product)}
+                      className="text-indigo-600 hover:text-indigo-900 mr-4"
+                    >
+                      Modifier
+                    </button>
                     <button
                       onClick={() => deleteProduct(product.id)}
                       className="text-red-600 hover:text-red-900"
@@ -455,90 +705,48 @@ function ProductsManager({
   );
 }
 
-function DaysManager({
-  availableDays,
-  addAvailableDay,
-  removeAvailableDay,
-}: any) {
-  const [newDate, setNewDate] = useState("");
-
-  const handleAddDate = () => {
-    if (newDate) {
-      addAvailableDay(newDate);
-      setNewDate("");
-    }
-  };
-
-  return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-lg font-medium mb-4 text-gray-900">
-        Gestion des Jours Disponibles
-      </h2>
-
-      <div className="flex gap-2 mb-6 max-w-md">
-        <input
-          type="date"
-          value={newDate}
-          onChange={(e) => setNewDate(e.target.value)}
-          className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-black"
-        />
-        <button
-          onClick={handleAddDate}
-          className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
-        >
-          Ajouter
-        </button>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        {availableDays.map((day: any) => (
-          <div
-            key={day.id}
-            className="border border-gray-200 rounded-md p-4 flex justify-between items-center bg-gray-50"
-          >
-            <span className="font-medium text-gray-800">
-              {new Date(day.date).toLocaleDateString()}
-            </span>
-            <button
-              onClick={() => removeAvailableDay(day.id)}
-              className="text-red-600 hover:text-red-800"
-            >
-              ×
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function OrdersManager({ availableDays }: { availableDays: any[] }) {
-  const [orders, setOrders] = useState<Order[]>([]);
+function OrdersManager() {
+  const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
+  const [upcomingOrders, setUpcomingOrders] = useState<Order[]>([]);
+  const [pastOrders, setPastOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = await fetch("/api/orders");
-        if (response.ok) {
-          const data = await response.json();
-          setOrders(data);
+  const fetchOrders = async (period: "upcoming" | "past") => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/orders?period=${period}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (period === "upcoming") {
+          setUpcomingOrders(data);
+        } else {
+          setPastOrders(data);
         }
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchOrders();
+  useEffect(() => {
+    fetchOrders("upcoming");
   }, []);
 
-  const filteredOrders = orders.filter((order) => {
+  useEffect(() => {
+    if (activeTab === "past" && pastOrders.length === 0) {
+      fetchOrders("past");
+    }
+  }, [activeTab]);
+
+  const currentOrders = activeTab === "upcoming" ? upcomingOrders : pastOrders;
+
+  const filteredOrders = currentOrders.filter((order) => {
     // Filter by date
     if (selectedDate && !order.pickupDate.startsWith(selectedDate)) {
       return false;
@@ -563,10 +771,6 @@ function OrdersManager({ availableDays }: { availableDays: any[] }) {
     setSortOrder(sortOrder === "asc" ? "desc" : "asc");
   };
 
-  if (loading) {
-    return <div className="text-center py-8">Chargement des commandes...</div>;
-  }
-
   return (
     <div className="bg-white shadow rounded-lg p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -574,119 +778,142 @@ function OrdersManager({ availableDays }: { availableDays: any[] }) {
           Gestion des Commandes
         </h2>
 
-        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-          {/* Date Filter */}
-          <select
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 text-black text-sm"
-          >
-            <option value="">Toutes les dates</option>
-            {availableDays.map((day) => (
-              <option key={day.date} value={day.date}>
-                {new Date(day.date).toLocaleDateString()}
-              </option>
-            ))}
-          </select>
-
-          {/* Name Search */}
-          <input
-            type="text"
-            placeholder="Rechercher un client..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 text-black text-sm"
-          />
-
-          {/* Sort Button */}
+        <div className="flex space-x-4">
           <button
-            onClick={toggleSortOrder}
-            className="px-3 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 whitespace-nowrap"
+            onClick={() => setActiveTab("upcoming")}
+            className={`px-4 py-2 rounded-md text-sm font-medium ${
+              activeTab === "upcoming"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
           >
-            Nom {sortOrder === "asc" ? "↑" : "↓"}
+            À venir
+          </button>
+          <button
+            onClick={() => setActiveTab("past")}
+            className={`px-4 py-2 rounded-md text-sm font-medium ${
+              activeTab === "past"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            Passées
           </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Client
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date de retrait
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Produits
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Total
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {sortedOrders.length === 0 ? (
+      <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto mb-6">
+        {/* Date Filter */}
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          className="border border-gray-300 rounded-md px-3 py-2 text-black text-sm"
+        />
+
+        {/* Name Search */}
+        <input
+          type="text"
+          placeholder="Rechercher un client..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="border border-gray-300 rounded-md px-3 py-2 text-black text-sm"
+        />
+
+        {/* Sort Button */}
+        <button
+          onClick={toggleSortOrder}
+          className="px-3 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 whitespace-nowrap"
+        >
+          Nom {sortOrder === "asc" ? "↑" : "↓"}
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-8">Chargement des commandes...</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
-                  Aucune commande trouvée.
-                </td>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Client
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date de retrait
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Produits
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Total
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
-            ) : (
-              sortedOrders.map((order) => (
-                <tr key={order.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {order.clientName}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(order.pickupDate).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    <ul className="list-disc list-inside">
-                      {order.items.map((item, idx) => (
-                        <li key={idx}>
-                          {item.quantity}x {item.product.designation}
-                        </li>
-                      ))}
-                    </ul>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {order.items
-                      .reduce(
-                        (acc, item) => acc + item.product.price * item.quantity,
-                        0
-                      )
-                      .toFixed(2)}{" "}
-                    €
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => router.push(`/user?orderId=${order.id}`)}
-                      className="text-indigo-600 hover:text-indigo-900"
-                    >
-                      Modifier
-                    </button>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {sortedOrders.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-4 text-center text-gray-500"
+                  >
+                    Aucune commande trouvée.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                sortedOrders.map((order) => (
+                  <tr key={order.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {order.clientName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(order.pickupDate).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      <ul className="list-disc list-inside">
+                        {order.items.map((item, idx) => (
+                          <li key={idx}>
+                            {item.quantity}x {item.product.designation}
+                          </li>
+                        ))}
+                      </ul>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {order.items
+                        .reduce(
+                          (acc, item) =>
+                            acc + item.product.price * item.quantity,
+                          0
+                        )
+                        .toFixed(2)}{" "}
+                      €
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => router.push(`/user?orderId=${order.id}`)}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
+                        Modifier
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
 
 function ProductionManager({
-  availableDays,
   categories,
   subCategories,
 }: {
-  availableDays: any[];
   categories: Category[];
   subCategories: any[];
 }) {
@@ -695,10 +922,15 @@ function ProductionManager({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!selectedDate) {
+      setOrders([]);
+      return;
+    }
+
     const fetchOrders = async () => {
       setLoading(true);
       try {
-        const response = await fetch("/api/orders");
+        const response = await fetch(`/api/orders?date=${selectedDate}`);
         if (response.ok) {
           const data = await response.json();
           setOrders(data);
@@ -711,14 +943,7 @@ function ProductionManager({
     };
 
     fetchOrders();
-  }, []);
-
-  const filteredOrders = orders.filter((order) => {
-    if (!selectedDate) return false;
-    // Compare dates (ignoring time if necessary, but pickupDate is usually ISO string)
-    // Assuming pickupDate in order is ISO string YYYY-MM-DD...
-    return order.pickupDate.startsWith(selectedDate);
-  });
+  }, [selectedDate]);
 
   // Aggregate products
   const productQuantities = new Map<
@@ -731,7 +956,7 @@ function ProductionManager({
     }
   >();
 
-  filteredOrders.forEach((order) => {
+  orders.forEach((order) => {
     order.items.forEach((item) => {
       const productId = item.product.id;
       const current = productQuantities.get(productId);
@@ -816,18 +1041,12 @@ function ProductionManager({
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Sélectionner une date
         </label>
-        <select
+        <input
+          type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
           className="w-full md:w-64 border border-gray-300 rounded-md px-3 py-2 text-black"
-        >
-          <option value="">-- Choisir une date --</option>
-          {availableDays.map((day) => (
-            <option key={day.date} value={day.date}>
-              {new Date(day.date).toLocaleDateString()}
-            </option>
-          ))}
-        </select>
+        />
       </div>
 
       {selectedDate && (

@@ -20,9 +20,59 @@ interface UpdateOrderBody {
   items?: OrderItemInput[];
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const period = searchParams.get("period");
+  const dateParam = searchParams.get("date");
+
   try {
+    let whereClause: Prisma.OrderWhereInput = {};
+    let orderBy: Prisma.OrderOrderByWithRelationInput = { createdAt: "desc" };
+
+    const now = new Date();
+    // Set to beginning of day to include orders for today in "upcoming"
+    now.setHours(0, 0, 0, 0);
+
+    if (dateParam) {
+      // Filter by specific date
+      const startOfDay = new Date(dateParam);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(dateParam);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      whereClause = {
+        pickupDate: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      };
+    } else if (period === "upcoming") {
+      const oneMonthLater = new Date(now);
+      oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+
+      whereClause = {
+        pickupDate: {
+          gte: now,
+          lte: oneMonthLater,
+        },
+      };
+      orderBy = { pickupDate: "asc" };
+    } else if (period === "past") {
+      const sixMonthsAgo = new Date(now);
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+      whereClause = {
+        pickupDate: {
+          lt: now,
+          gte: sixMonthsAgo,
+        },
+      };
+      orderBy = { pickupDate: "desc" };
+    }
+
     const orders = await prisma.order.findMany({
+      where: whereClause,
       include: {
         items: {
           include: {
@@ -30,9 +80,7 @@ export async function GET() {
           },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: orderBy,
     });
 
     return NextResponse.json(orders);

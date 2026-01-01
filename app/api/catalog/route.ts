@@ -3,35 +3,28 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const [categories, subCategories, products, availableDays] =
-      await Promise.all([
-        prisma.category.findMany({
-          orderBy: {
-            name: "asc",
-          },
-        }),
-        prisma.subCategory.findMany({
-          orderBy: {
-            name: "asc",
-          },
-        }),
-        prisma.product.findMany({
-          orderBy: {
-            designation: "asc",
-          },
-        }),
-        prisma.availableDay.findMany({
-          orderBy: {
-            date: "asc",
-          },
-        }),
-      ]);
+    const [categories, subCategories, products] = await Promise.all([
+      prisma.category.findMany({
+        orderBy: {
+          name: "asc",
+        },
+      }),
+      prisma.subCategory.findMany({
+        orderBy: {
+          name: "asc",
+        },
+      }),
+      prisma.product.findMany({
+        orderBy: {
+          designation: "asc",
+        },
+      }),
+    ]);
 
     return NextResponse.json({
       categories,
       subCategories,
       products,
-      availableDays,
     });
     return NextResponse.json({ message: "test" });
   } catch (error) {
@@ -74,13 +67,6 @@ export async function POST(request: Request) {
           },
         });
         break;
-      case "availableDay":
-        result = await prisma.availableDay.create({
-          data: {
-            date: new Date(data.date),
-          },
-        });
-        break;
       default:
         return NextResponse.json({ error: "Invalid type" }, { status: 400 });
     }
@@ -96,6 +82,7 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const { type, id, ...data } = body;
+    console.log("🚀 ~ PUT ~ body:", body);
 
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
@@ -127,14 +114,6 @@ export async function PUT(request: Request) {
             price: data.price ? parseFloat(data.price) : undefined,
             categoryId: data.categoryId,
             subCategoryId: data.subCategoryId,
-          },
-        });
-        break;
-      case "availableDay":
-        result = await prisma.availableDay.update({
-          where: { id },
-          data: {
-            date: new Date(data.date),
           },
         });
         break;
@@ -173,9 +152,6 @@ export async function DELETE(request: Request) {
         break;
       case "product":
         result = await prisma.product.delete({ where: { id } });
-        break;
-      case "availableDay":
-        result = await prisma.availableDay.delete({ where: { id } });
         break;
       default:
         return NextResponse.json({ error: "Invalid type" }, { status: 400 });

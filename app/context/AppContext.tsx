@@ -10,14 +10,7 @@ import React, {
   ReactNode,
 } from "react";
 import { useSession, signOut } from "next-auth/react";
-import {
-  User,
-  Product,
-  Category,
-  SubCategory,
-  Order,
-  AvailableDay,
-} from "../types";
+import { User, Product, Category, SubCategory, Order } from "../types";
 
 interface AppContextType {
   user: User | null;
@@ -38,10 +31,6 @@ interface AppContextType {
   addSubCategory: (subCategory: Omit<SubCategory, "id">) => Promise<void>;
   deleteSubCategory: (id: string) => Promise<void>;
 
-  availableDays: AvailableDay[];
-  addAvailableDay: (date: string) => Promise<void>;
-  removeAvailableDay: (id: string) => Promise<void>;
-
   orders: Order[];
   addOrder: (order: Omit<Order, "id" | "createdAt">) => Promise<void>;
   updateOrder: (
@@ -58,7 +47,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
-  const [availableDays, setAvailableDays] = useState<AvailableDay[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
 
   const user: User | null = session?.user
@@ -81,7 +69,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setProducts(data.products);
         setCategories(data.categories);
         setSubCategories(data.subCategories);
-        setAvailableDays(data.availableDays);
       }
     } catch (error) {
       console.error("Failed to fetch catalog", error);
@@ -89,11 +76,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const init = async () => {
-      await refreshData();
-    };
-    init();
-  }, [refreshData]);
+    if (status === "authenticated") {
+      const refresh = async () => {
+        await refreshData();
+      };
+      refresh();
+    }
+  }, [status, refreshData]);
 
   // Product Actions
   const addProduct = async (product: Omit<Product, "id">) => {
@@ -159,23 +148,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteSubCategory = async (id: string) => {
     await fetch(`/api/catalog?type=subCategory&id=${id}`, {
-      method: "DELETE",
-    });
-    await refreshData();
-  };
-
-  // Available Days Actions
-  const addAvailableDay = async (date: string) => {
-    await fetch("/api/catalog", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "availableDay", date }),
-    });
-    await refreshData();
-  };
-
-  const removeAvailableDay = async (id: string) => {
-    await fetch(`/api/catalog?type=availableDay&id=${id}`, {
       method: "DELETE",
     });
     await refreshData();
@@ -258,9 +230,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         subCategories,
         addSubCategory,
         deleteSubCategory,
-        availableDays,
-        addAvailableDay,
-        removeAvailableDay,
         orders,
         addOrder,
         updateOrder,

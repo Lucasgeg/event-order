@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { PDFDocument } from "pdf-lib";
+import { auth } from "@clerk/nextjs/server";
 
 // Types based on the AI response structure
 interface AIProduct {
@@ -30,6 +31,12 @@ const PROMPT =
 
 export async function POST(request: Request) {
   try {
+    const { orgId } = await auth();
+
+    if (!orgId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
 
@@ -187,6 +194,7 @@ export async function POST(request: Request) {
         const category = await prisma.category.create({
           data: {
             name: categoryData.name,
+            tenantId: orgId,
           },
         });
 
@@ -198,6 +206,7 @@ export async function POST(request: Request) {
                 designation: productData.designation,
                 price: productData.price,
                 categoryId: category.id,
+                tenantId: orgId,
               },
             });
           }
@@ -225,6 +234,7 @@ export async function POST(request: Request) {
                       price: productData.price,
                       categoryId: category.id,
                       subCategoryId: subCategory.id,
+                      tenantId: orgId,
                     },
                   });
                 }
@@ -238,6 +248,7 @@ export async function POST(request: Request) {
                       designation: productData.designation,
                       price: productData.price,
                       categoryId: category.id,
+                      tenantId: orgId,
                     },
                   });
                 }

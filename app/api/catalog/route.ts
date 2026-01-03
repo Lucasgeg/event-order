@@ -1,20 +1,34 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@clerk/nextjs/server";
 
 export async function GET() {
   try {
+    const { orgId } = await auth();
+
+    if (!orgId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const [categories, subCategories, products] = await Promise.all([
       prisma.category.findMany({
+        where: { tenantId: orgId },
         orderBy: {
           name: "asc",
         },
       }),
       prisma.subCategory.findMany({
+        where: {
+          category: {
+            tenantId: orgId,
+          },
+        },
         orderBy: {
           name: "asc",
         },
       }),
       prisma.product.findMany({
+        where: { tenantId: orgId },
         orderBy: {
           designation: "asc",
         },
@@ -26,7 +40,6 @@ export async function GET() {
       subCategories,
       products,
     });
-    return NextResponse.json({ message: "test" });
   } catch (error) {
     console.error("Error fetching catalog:", error);
     return NextResponse.json(
@@ -38,6 +51,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const { orgId } = await auth();
+
+    if (!orgId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { type, ...data } = body;
 
@@ -46,7 +65,7 @@ export async function POST(request: Request) {
     switch (type) {
       case "category":
         result = await prisma.category.create({
-          data: { name: data.name },
+          data: { name: data.name, tenantId: orgId },
         });
         break;
       case "subCategory":
@@ -64,6 +83,7 @@ export async function POST(request: Request) {
             price: parseFloat(data.price),
             categoryId: data.categoryId,
             subCategoryId: data.subCategoryId || null,
+            tenantId: orgId,
           },
         });
         break;

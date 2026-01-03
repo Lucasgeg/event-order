@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
+import { auth } from "@clerk/nextjs/server";
 
 interface OrderItemInput {
   productId: string;
@@ -26,6 +27,12 @@ export async function GET(request: Request) {
   const dateParam = searchParams.get("date");
 
   try {
+    const { orgId } = await auth();
+
+    if (!orgId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     let whereClause: Prisma.OrderWhereInput = {};
     let orderBy: Prisma.OrderOrderByWithRelationInput = { createdAt: "desc" };
 
@@ -72,7 +79,7 @@ export async function GET(request: Request) {
     }
 
     const orders = await prisma.order.findMany({
-      where: whereClause,
+      where: { ...whereClause, tenantId: orgId },
       include: {
         items: {
           include: {
@@ -95,6 +102,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const { orgId } = await auth();
+
+    if (!orgId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body: CreateOrderBody = await request.json();
     const { clientName, pickupDate, items } = body;
 
@@ -128,6 +141,7 @@ export async function POST(request: Request) {
       data: {
         clientName,
         pickupDate: new Date(pickupDate),
+        tenantId: orgId,
         items: {
           create: items.map((item) => ({
             product: { connect: { id: item.productId } },
@@ -156,6 +170,12 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const { orgId } = await auth();
+
+    if (!orgId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body: UpdateOrderBody = await request.json();
     const { id, clientName, pickupDate, items } = body;
 
@@ -190,7 +210,7 @@ export async function PUT(request: Request) {
     }
 
     const order = await prisma.order.update({
-      where: { id },
+      where: { id, tenantId: orgId },
       data: updateData,
       include: {
         items: {

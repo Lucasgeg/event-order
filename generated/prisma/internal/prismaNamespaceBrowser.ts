@@ -51,10 +51,11 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
+  Tenant: 'Tenant',
+  TenantMember: 'TenantMember',
   Category: 'Category',
   SubCategory: 'SubCategory',
   Product: 'Product',
-  AvailableDay: 'AvailableDay',
   Order: 'Order',
   OrderItem: 'OrderItem'
 } as const
@@ -75,9 +76,30 @@ export const TransactionIsolationLevel = {
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+export const TenantScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
+
+
+export const TenantMemberScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  role: 'role'
+} as const
+
+export type TenantMemberScalarFieldEnum = (typeof TenantMemberScalarFieldEnum)[keyof typeof TenantMemberScalarFieldEnum]
+
+
 export const CategoryScalarFieldEnum = {
   id: 'id',
-  name: 'name'
+  name: 'name',
+  tenantId: 'tenantId'
 } as const
 
 export type CategoryScalarFieldEnum = (typeof CategoryScalarFieldEnum)[keyof typeof CategoryScalarFieldEnum]
@@ -97,25 +119,19 @@ export const ProductScalarFieldEnum = {
   designation: 'designation',
   price: 'price',
   categoryId: 'categoryId',
-  subCategoryId: 'subCategoryId'
+  subCategoryId: 'subCategoryId',
+  tenantId: 'tenantId'
 } as const
 
 export type ProductScalarFieldEnum = (typeof ProductScalarFieldEnum)[keyof typeof ProductScalarFieldEnum]
-
-
-export const AvailableDayScalarFieldEnum = {
-  id: 'id',
-  date: 'date'
-} as const
-
-export type AvailableDayScalarFieldEnum = (typeof AvailableDayScalarFieldEnum)[keyof typeof AvailableDayScalarFieldEnum]
 
 
 export const OrderScalarFieldEnum = {
   id: 'id',
   clientName: 'clientName',
   pickupDate: 'pickupDate',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  tenantId: 'tenantId'
 } as const
 
 export type OrderScalarFieldEnum = (typeof OrderScalarFieldEnum)[keyof typeof OrderScalarFieldEnum]

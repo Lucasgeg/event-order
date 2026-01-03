@@ -8,10 +8,11 @@
  *
  * 🟢 You can import this file directly.
  */
+export type * from './models/Tenant'
+export type * from './models/TenantMember'
 export type * from './models/Category'
 export type * from './models/SubCategory'
 export type * from './models/Product'
-export type * from './models/AvailableDay'
 export type * from './models/Order'
 export type * from './models/OrderItem'
 export type * from './commonInputTypes'

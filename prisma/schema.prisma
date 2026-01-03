@@ -7,9 +7,39 @@ datasource db {
   provider = "postgresql"
 }
 
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categories Category[]
+  products   Product[]
+  orders     Order[]
+  members    TenantMember[]
+}
+
+model TenantMember {
+  id       String @id @default(cuid())
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId String
+
+  userId String // Clerk user id
+  role   TenantRole
+
+  @@unique([tenantId, userId])
+}
+
+enum TenantRole {
+  ADMIN
+  USER
+}
+
 model Category {
   id            String        @id @default(cuid())
   name          String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId      String
   subCategories SubCategory[]
   products      Product[]
 }
@@ -31,11 +61,8 @@ model Product {
   subCategory   SubCategory? @relation(fields: [subCategoryId], references: [id])
   subCategoryId String?
   orderItems    OrderItem[]
-}
-
-model AvailableDay {
-  id   String   @id @default(cuid())
-  date DateTime @unique
+  tenant        Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId      String
 }
 
 model Order {
@@ -44,6 +71,8 @@ model Order {
   pickupDate DateTime
   createdAt  DateTime    @default(now())
   items      OrderItem[]
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId   String
 }
 
 model OrderItem {

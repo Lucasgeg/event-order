@@ -9,13 +9,12 @@ import React, {
   useCallback,
   ReactNode,
 } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useUser, useOrganization } from "@clerk/nextjs";
 import { User, Product, Category, SubCategory, Order } from "../types";
 
 interface AppContextType {
   user: User | null;
   isLoading: boolean;
-  logout: () => void;
 
   products: Product[];
   addProduct: (product: Omit<Product, "id">) => Promise<void>;
@@ -43,23 +42,20 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { data: session, status } = useSession();
+  const { user: clerkUser, isLoaded, isSignedIn } = useUser();
+  const { membership } = useOrganization();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
 
-  const user: User | null = session?.user
+  const user: User | null = clerkUser
     ? {
-        email: session.user.email!,
-        name: session.user.name!,
-        role: (session.user as any).role as "admin" | "user",
+        email: clerkUser.primaryEmailAddress?.emailAddress || "",
+        name: clerkUser.fullName || clerkUser.username || "User",
+        role: membership?.role === "org:admin" ? "admin" : "user",
       }
     : null;
-
-  const logout = () => {
-    signOut({ callbackUrl: "/" });
-  };
 
   const refreshData = useCallback(async () => {
     try {
@@ -76,13 +72,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (status === "authenticated") {
+    if (isLoaded && isSignedIn) {
       const refresh = async () => {
         await refreshData();
       };
       refresh();
     }
-  }, [status, refreshData]);
+  }, [isLoaded, isSignedIn, refreshData]);
 
   // Product Actions
   const addProduct = async (product: Omit<Product, "id">) => {
@@ -217,8 +213,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppContext.Provider
       value={{
         user,
-        isLoading: status === "loading",
-        logout,
+        isLoading: !isLoaded,
         products,
         addProduct,
         updateProduct,

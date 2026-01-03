@@ -5,17 +5,11 @@ import { useState, useEffect, Suspense } from "react";
 import { useApp } from "../context/AppContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Product, OrderItem } from "../types";
+import { UserButton } from "@clerk/nextjs";
 
 function UserPageContent() {
-  const {
-    user,
-    logout,
-    products,
-    categories,
-    subCategories,
-    addOrder,
-    updateOrder,
-  } = useApp();
+  const { user, products, categories, subCategories, addOrder, updateOrder } =
+    useApp();
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
@@ -68,11 +62,6 @@ function UserPageContent() {
     // router.push('/');
     // return null;
   }
-
-  const handleLogout = () => {
-    logout();
-    router.push("/");
-  };
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
@@ -217,15 +206,18 @@ function UserPageContent() {
 
             {/* Logout button moved here since navbar is gone */}
             <div className="ml-auto flex items-center gap-4">
+              {user?.role === "admin" && (
+                <button
+                  onClick={() => router.push("/admin")}
+                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-200 border border-gray-300"
+                >
+                  Retour Admin
+                </button>
+              )}
               <span className="text-sm text-gray-500 hidden sm:inline">
-                {user?.name}
+                {user?.role === "user" ? "Utilisateur" : "Admin"}
               </span>
-              <button
-                onClick={handleLogout}
-                className="text-red-600 text-sm hover:underline"
-              >
-                Déconnexion
-              </button>
+              <UserButton />
             </div>
           </div>
 

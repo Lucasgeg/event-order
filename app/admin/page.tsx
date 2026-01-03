@@ -5,12 +5,12 @@ import { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import { useRouter } from "next/navigation";
 import { Product, Category, Order } from "../types";
+import { UserButton } from "@clerk/nextjs";
 
 export default function AdminPage() {
   const {
     user,
     isLoading,
-    logout,
     products,
     addProduct,
     updateProduct,
@@ -46,11 +46,6 @@ export default function AdminPage() {
       </div>
     );
   }
-
-  const handleLogout = () => {
-    logout();
-    router.push("/");
-  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -102,16 +97,17 @@ export default function AdminPage() {
                 >
                   Production
                 </button>
+                <button
+                  onClick={() => router.push("/user")}
+                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-200"
+                >
+                  Vue Utilisateur
+                </button>
               </div>
             </div>
             <div className="flex items-center">
-              <span className="mr-4 text-gray-600">Bonjour, {user?.name}</span>
-              <button
-                onClick={handleLogout}
-                className="text-red-600 hover:text-red-800 font-medium"
-              >
-                Déconnexion
-              </button>
+              <span className="mr-4 text-gray-600">Bonjour Admin</span>
+              <UserButton />
             </div>
           </div>
         </div>

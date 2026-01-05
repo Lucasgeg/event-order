@@ -28,6 +28,12 @@ export async function GET(request: Request) {
   const startDateParam = searchParams.get("startDate");
   const endDateParam = searchParams.get("endDate");
 
+  // Pagination & Search params
+  const clientName = searchParams.get("clientName");
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const limit = parseInt(searchParams.get("limit") || "10", 10);
+  const skip = (page - 1) * limit;
+
   try {
     const { orgId } = await auth();
 
@@ -42,7 +48,16 @@ export async function GET(request: Request) {
     // Set to beginning of day to include orders for today in "upcoming"
     now.setHours(0, 0, 0, 0);
 
-    if (startDateParam && endDateParam) {
+    if (clientName) {
+      // If searching by client name, ignore regular date range filters unless specified
+      // but we still likely want to respect tenantId
+      whereClause = {
+        clientName: {
+          contains: clientName,
+          mode: "insensitive",
+        },
+      };
+    } else if (startDateParam && endDateParam) {
       // Filter by date range
       const start = new Date(startDateParam);
       start.setHours(0, 0, 0, 0);
@@ -94,19 +109,34 @@ export async function GET(request: Request) {
       orderBy = { pickupDate: "desc" };
     }
 
-    const orders = await prisma.order.findMany({
-      where: { ...whereClause, tenantId: orgId },
-      include: {
-        items: {
-          include: {
-            product: true,
+    const [orders, totalCount] = await Promise.all([
+      prisma.order.findMany({
+        where: { ...whereClause, tenantId: orgId },
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
           },
         },
-      },
-      orderBy: orderBy,
-    });
+        orderBy,
+        take: limit,
+        skip: skip,
+      }),
+      prisma.order.count({
+        where: { ...whereClause, tenantId: orgId },
+      }),
+    ]);
 
-    return NextResponse.json(orders);
+    return NextResponse.json({
+      orders,
+      pagination: {
+        total: totalCount,
+        page,
+        limit,
+        totalPages: Math.ceil(totalCount / limit),
+      },
+    });
   } catch (error) {
     console.error("Error fetching orders:", error);
     return NextResponse.json(

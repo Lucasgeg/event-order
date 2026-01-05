@@ -78,10 +78,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email } = await request.json();
+    const { email, role } = await request.json();
     if (!email) {
       return NextResponse.json({ error: "Email required" }, { status: 400 });
     }
+
+    const roleToInvite = role === "org:admin" ? "org:admin" : "org:member";
 
     const origin = request.headers.get("origin") || "http://localhost:3000";
 
@@ -91,7 +93,7 @@ export async function POST(request: Request) {
       await client.organizations.createOrganizationInvitation({
         organizationId: orgId,
         emailAddress: email,
-        role: "org:member",
+        role: roleToInvite,
         redirectUrl: `${origin}/accept-invitation`,
       });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

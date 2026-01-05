@@ -28,13 +28,13 @@ export const WelcomeEmail = ({
     <Html>
       <Head />
       <Preview>
-        Bienvenue sur Event Order - Vos identifiants de connexion
+        Bienvenue sur LG Order Register - Vos identifiants de connexion
       </Preview>
       <Tailwind>
         <Body className="bg-white my-auto mx-auto font-sans">
           <Container className="border border-solid border-[#eaeaea] rounded my-10 mx-auto p-5 w-116.25">
             <Heading className="text-black text-[24px] font-normal text-center p-0 my-7.5 mx-0">
-              Bienvenue sur <strong>Event Order</strong>
+              Bienvenue sur <strong>LG Order Register</strong>
             </Heading>
             <Text className="text-black text-[14px] leading-6">Bonjour,</Text>
             <Text className="text-black text-[14px] leading-6">

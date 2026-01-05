@@ -6,6 +6,7 @@ import { useApp } from "../../context/AppContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Product, OrderItem } from "../../types";
 import { UserButton } from "@clerk/nextjs";
+import Image from "next/image";
 
 function UserPageContent() {
   const { user, products, categories, subCategories, addOrder, updateOrder } =
@@ -197,6 +198,13 @@ function UserPageContent() {
                 ← Retour
               </button>
             )}
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              width={32}
+              height={32}
+              className="h-8 w-8"
+            />
             <h2 className="text-xl font-bold text-gray-800">
               {view === "categories" && "Sélectionnez une catégorie"}
               {view === "subcategories" && currentCategory?.name}

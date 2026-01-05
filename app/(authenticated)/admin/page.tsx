@@ -54,6 +54,13 @@ export default function AdminPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
+              <Image
+                src="/logo.png"
+                alt="Logo"
+                width={32}
+                height={32}
+                className="h-8 w-8 mr-2"
+              />
               <h1 className="text-xl font-bold text-gray-800">
                 Admin Dashboard
               </h1>
@@ -181,6 +188,9 @@ function CategoriesManager({
     null
   );
   const [editingCategoryName, setEditingCategoryName] = useState("");
+  const [showAutoGeneration, setShowAutoGeneration] = useState(
+    categories.length === 0
+  );
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -251,38 +261,52 @@ function CategoriesManager({
   return (
     <div className="space-y-6">
       <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-lg font-medium mb-4 text-gray-900">
-          Génération automatique
-        </h2>
-        <div className="flex items-center gap-4">
-          <input
-            type="file"
-            accept=".pdf"
-            onChange={handleFileSelect}
-            disabled={isGenerating}
-            className="block w-full text-sm text-gray-500
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-medium text-gray-900">
+            Génération automatique
+          </h2>
+          <button
+            onClick={() => setShowAutoGeneration(!showAutoGeneration)}
+            className="text-sm text-blue-600 hover:text-blue-800 focus:outline-none"
+          >
+            {showAutoGeneration ? "Masquer" : "Afficher"}
+          </button>
+        </div>
+
+        {showAutoGeneration && (
+          <>
+            <div className="flex items-center gap-4">
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={handleFileSelect}
+                disabled={isGenerating}
+                className="block w-full text-sm text-gray-500
               file:mr-4 file:py-2 file:px-4
               file:rounded-md file:border-0
               file:text-sm file:font-semibold
               file:bg-blue-50 file:text-blue-700
               hover:file:bg-blue-100"
-          />
-          <button
-            onClick={handleGenerate}
-            disabled={!selectedFile || isGenerating}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed whitespace-nowrap"
-          >
-            {isGenerating ? "Traitement..." : "Générer"}
-          </button>
-        </div>
-        <div className="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
-          <p className="text-sm">
-            <span className="font-bold">Note importante :</span> La génération
-            du menu est réalisée par une intelligence artificielle. Il est
-            impératif de vérifier l&apos;exactitude des catégories et produits
-            générés, car l&apos;IA peut commettre des erreurs.
-          </p>
-        </div>
+              />
+              <button
+                onClick={handleGenerate}
+                disabled={!selectedFile || isGenerating}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {isGenerating ? "Traitement..." : "Générer"}
+              </button>
+            </div>
+            <div className="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
+              <p className="text-sm">
+                <span className="font-bold">Note importante :</span> La
+                génération du menu est réalisée par une intelligence
+                artificielle. Il est impératif de vérifier l&apos;exactitude des
+                catégories et produits générés, car l&apos;IA peut commettre des
+                erreurs.
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="bg-white shadow rounded-lg p-6">
@@ -715,25 +739,35 @@ function ProductsManager({
 
 function OrdersManager() {
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
-  const [upcomingOrders, setUpcomingOrders] = useState<Order[]>([]);
-  const [pastOrders, setPastOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const router = useRouter();
 
-  const fetchOrders = async (period: "upcoming" | "past") => {
+  const fetchOrders = async (
+    targetPage: number = 1,
+    query: string = "",
+    period: "upcoming" | "past" = activeTab
+  ) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/orders?period=${period}`);
+      let url = `/api/orders?page=${targetPage}&limit=10&period=${period}`;
+      if (query) {
+        url += `&clientName=${encodeURIComponent(query)}`;
+      }
+      if (selectedDate) {
+        url += `&date=${selectedDate}`;
+      }
+
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        if (period === "upcoming") {
-          setUpcomingOrders(data);
-        } else {
-          setPastOrders(data);
-        }
+        setOrders(data.orders);
+        setTotalPages(data.pagination.totalPages);
+        setPage(data.pagination.page);
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -743,40 +777,18 @@ function OrdersManager() {
   };
 
   useEffect(() => {
-    fetchOrders("upcoming");
-  }, []);
+    fetchOrders(1, "", activeTab);
+  }, [activeTab]); // Fetch when switching tabs
 
-  useEffect(() => {
-    if (activeTab === "past" && pastOrders.length === 0) {
-      fetchOrders("past");
+  const handleSearch = () => {
+    setPage(1);
+    fetchOrders(1, searchQuery, activeTab);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      fetchOrders(newPage, searchQuery, activeTab);
     }
-  }, [activeTab]);
-
-  const currentOrders = activeTab === "upcoming" ? upcomingOrders : pastOrders;
-
-  const filteredOrders = currentOrders.filter((order) => {
-    // Filter by date
-    if (selectedDate && !order.pickupDate.startsWith(selectedDate)) {
-      return false;
-    }
-    // Filter by name
-    if (
-      searchQuery &&
-      !order.clientName.toLowerCase().includes(searchQuery.toLowerCase())
-    ) {
-      return false;
-    }
-    return true;
-  });
-
-  const sortedOrders = filteredOrders.sort((a, b) => {
-    return sortOrder === "asc"
-      ? a.clientName.localeCompare(b.clientName)
-      : b.clientName.localeCompare(a.clientName);
-  });
-
-  const toggleSortOrder = () => {
-    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
   };
 
   return (
@@ -827,92 +839,132 @@ function OrdersManager() {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="border border-gray-300 rounded-md px-3 py-2 text-black text-sm"
         />
-
-        {/* Sort Button */}
         <button
-          onClick={toggleSortOrder}
-          className="px-3 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 whitespace-nowrap"
+          onClick={handleSearch}
+          className="px-3 py-2 rounded-md text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap"
         >
-          Nom {sortOrder === "asc" ? "↑" : "↓"}
+          Rechercher
         </button>
       </div>
 
       {loading ? (
         <div className="text-center py-8">Chargement des commandes...</div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Client
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date de retrait
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Produits
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {sortedOrders.length === 0 ? (
+        <>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-4 text-center text-gray-500"
-                  >
-                    Aucune commande trouvée.
-                  </td>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Client
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date de retrait
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Produits
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ) : (
-                sortedOrders.map((order) => (
-                  <tr key={order.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {order.clientName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(order.pickupDate).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      <ul className="list-disc list-inside">
-                        {order.items.map((item, idx) => (
-                          <li key={idx}>
-                            {item.quantity}x {item.product.designation}
-                          </li>
-                        ))}
-                      </ul>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {order.items
-                        .reduce(
-                          (acc, item) =>
-                            acc + item.product.price * item.quantity,
-                          0
-                        )
-                        .toFixed(2)}{" "}
-                      €
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => router.push(`/user?orderId=${order.id}`)}
-                        className="text-indigo-600 hover:text-indigo-900"
-                      >
-                        Modifier
-                      </button>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {orders.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
+                      Aucune commande trouvée.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  orders.map((order) => (
+                    <tr key={order.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {order.clientName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(order.pickupDate).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        <ul className="list-disc list-inside">
+                          {order.items.map((item, idx) => (
+                            <li key={idx}>
+                              {item.quantity}x {item.product.designation}
+                            </li>
+                          ))}
+                        </ul>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {order.items
+                          .reduce(
+                            (acc, item) =>
+                              acc + item.product.price * item.quantity,
+                            0
+                          )
+                          .toFixed(2)}{" "}
+                        €
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() =>
+                            router.push(`/user?orderId=${order.id}`)
+                          }
+                          className="text-indigo-600 hover:text-indigo-900 mr-4"
+                        >
+                          Modifier
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (
+                              confirm("Voulez-vous supprimer cette commande ?")
+                            ) {
+                              fetch(`/api/orders/${order.id}`, {
+                                method: "DELETE",
+                              }).then(() => fetchOrders(page, searchQuery));
+                            }
+                          }}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Supprimer
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-6">
+              <button
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page === 1}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400"
+              >
+                Précédent
+              </button>
+              <span className="text-sm text-gray-700">
+                Page <span className="font-medium">{page}</span> sur{" "}
+                <span className="font-medium">{totalPages}</span>
+              </span>
+              <button
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page === totalPages}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400"
+              >
+                Suivant
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -955,7 +1007,7 @@ function ProductionManager({
         const response = await fetch(url);
         if (response.ok) {
           const data = await response.json();
-          setOrders(data);
+          setOrders(data.orders || []);
         }
       } catch (error) {
         console.error("Error fetching orders:", error);
@@ -1195,6 +1247,9 @@ function MembersManager() {
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<"org:member" | "org:admin">(
+    "org:member"
+  );
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -1231,12 +1286,13 @@ function MembersManager() {
       const res = await fetch("/api/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: inviteEmail }),
+        body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
       });
       const data = await res.json();
       if (res.ok) {
         setSuccess("Invitation envoyée avec succès.");
         setInviteEmail("");
+        setInviteRole("org:member");
         fetchMembers();
       } else {
         setError(data.error || "Erreur lors de l'invitation.");
@@ -1285,6 +1341,21 @@ function MembersManager() {
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
               placeholder="email@exemple.com"
             />
+          </div>
+          <div className="w-40">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Rôle
+            </label>
+            <select
+              value={inviteRole}
+              onChange={(e) =>
+                setInviteRole(e.target.value as "org:member" | "org:admin")
+              }
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
+            >
+              <option value="org:member">Membre</option>
+              <option value="org:admin">Admin</option>
+            </select>
           </div>
           <button
             type="submit"

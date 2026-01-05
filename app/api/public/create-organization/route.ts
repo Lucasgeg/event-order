@@ -26,9 +26,25 @@ function generatePassword(length = 16) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { organisationName, adminEmail, memberEmail } = body;
+    const {
+      organisationName,
+      adminEmail,
+      memberEmail,
+      adminFirstName,
+      adminLastName,
+      memberFirstName,
+      memberLastName,
+    } = body;
 
-    if (!organisationName || !adminEmail || !memberEmail) {
+    if (
+      !organisationName ||
+      !adminEmail ||
+      !memberEmail ||
+      !adminFirstName ||
+      !adminLastName ||
+      !memberFirstName ||
+      !memberLastName
+    ) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -46,6 +62,8 @@ export async function POST(req: Request) {
     try {
       adminUser = await client.users.createUser({
         emailAddress: [adminEmail],
+        firstName: adminFirstName,
+        lastName: adminLastName,
         password: adminPassword,
         skipPasswordChecks: false,
         skipPasswordRequirement: false,
@@ -71,6 +89,8 @@ export async function POST(req: Request) {
     try {
       memberUser = await client.users.createUser({
         emailAddress: [memberEmail],
+        firstName: memberFirstName,
+        lastName: memberLastName,
         password: memberPassword,
         skipPasswordChecks: false,
         skipPasswordRequirement: false,
@@ -119,7 +139,7 @@ export async function POST(req: Request) {
           {
             from: "Cet Extra <no-reply@cetextra.fr>",
             to: adminEmail,
-            subject: "Bienvenue sur Event Order",
+            subject: "Bienvenue sur LG Order Register",
             react: WelcomeEmail({
               email: adminEmail,
               password: adminPassword,
@@ -129,7 +149,7 @@ export async function POST(req: Request) {
           {
             from: "Cet Extra <no-reply@cetextra.fr>",
             to: memberEmail,
-            subject: "Bienvenue sur Event Order",
+            subject: "Bienvenue sur LG Order Register",
             react: WelcomeEmail({
               email: memberEmail,
               password: memberPassword,

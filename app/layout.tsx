@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Event Order App",
+  title: "LG Order Register",
   description: "Order management system",
 };
 

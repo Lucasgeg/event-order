@@ -2,10 +2,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useApp } from "../context/AppContext";
+import { useApp } from "../../context/AppContext";
 import { useRouter } from "next/navigation";
-import { Product, Category, Order } from "../types";
+import { Product, Category, Order } from "../../types";
 import { UserButton } from "@clerk/nextjs";
+import Image from "next/image";
 
 export default function AdminPage() {
   const {
@@ -26,7 +27,7 @@ export default function AdminPage() {
   } = useApp();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "menu" | "products" | "orders" | "production"
+    "menu" | "products" | "orders" | "production" | "members"
   >("menu");
 
   useEffect(() => {
@@ -98,6 +99,16 @@ export default function AdminPage() {
                   Production
                 </button>
                 <button
+                  onClick={() => setActiveTab("members")}
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    activeTab === "members"
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  Membres
+                </button>
+                <button
                   onClick={() => router.push("/user")}
                   className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-200"
                 >
@@ -106,7 +117,7 @@ export default function AdminPage() {
               </div>
             </div>
             <div className="flex items-center">
-              <span className="mr-4 text-gray-600">Bonjour Admin</span>
+              <span className="mr-4 text-gray-600">Bonjour {user?.name}</span>
               <UserButton />
             </div>
           </div>
@@ -143,6 +154,7 @@ export default function AdminPage() {
             subCategories={subCategories}
           />
         )}
+        {activeTab === "members" && <MembersManager />}
       </main>
     </div>
   );
@@ -913,20 +925,34 @@ function ProductionManager({
   categories: Category[];
   subCategories: any[];
 }) {
+  const [mode, setMode] = useState<"single" | "range">("single");
   const [selectedDate, setSelectedDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!selectedDate) {
-      setOrders([]);
-      return;
-    }
-
     const fetchOrders = async () => {
+      if (mode === "single" && !selectedDate) {
+        setOrders([]);
+        return;
+      }
+      if (mode === "range" && (!startDate || !endDate)) {
+        setOrders([]);
+        return;
+      }
+
       setLoading(true);
       try {
-        const response = await fetch(`/api/orders?date=${selectedDate}`);
+        let url = "/api/orders?";
+        if (mode === "single") {
+          url += `date=${selectedDate}`;
+        } else {
+          url += `startDate=${startDate}&endDate=${endDate}`;
+        }
+
+        const response = await fetch(url);
         if (response.ok) {
           const data = await response.json();
           setOrders(data);
@@ -939,7 +965,7 @@ function ProductionManager({
     };
 
     fetchOrders();
-  }, [selectedDate]);
+  }, [mode, selectedDate, startDate, endDate]);
 
   // Aggregate products
   const productQuantities = new Map<
@@ -984,6 +1010,11 @@ function ProductionManager({
     window.print();
   };
 
+  const hasData = aggregatedProducts.length > 0;
+  const showContent =
+    (mode === "single" && selectedDate) ||
+    (mode === "range" && startDate && endDate);
+
   return (
     <div className="bg-white shadow rounded-lg p-6">
       <style jsx global>{`
@@ -1006,10 +1037,8 @@ function ProductionManager({
         }
       `}</style>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-medium text-gray-900">
-          Production par Jour
-        </h2>
-        {selectedDate && (
+        <h2 className="text-lg font-medium text-gray-900">Production</h2>
+        {hasData && (
           <button
             onClick={handlePrint}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
@@ -1033,29 +1062,89 @@ function ProductionManager({
         )}
       </div>
 
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Sélectionner une date
-        </label>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          className="w-full md:w-64 border border-gray-300 rounded-md px-3 py-2 text-black"
-        />
+      <div className="mb-6 space-y-4">
+        <div className="flex items-center space-x-4">
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              className="form-radio text-blue-600"
+              name="mode"
+              value="single"
+              checked={mode === "single"}
+              onChange={() => setMode("single")}
+            />
+            <span className="ml-2 text-gray-700">Par jour</span>
+          </label>
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              className="form-radio text-blue-600"
+              name="mode"
+              value="range"
+              checked={mode === "range"}
+              onChange={() => setMode("range")}
+            />
+            <span className="ml-2 text-gray-700">Par période</span>
+          </label>
+        </div>
+
+        {mode === "single" ? (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Sélectionner une date
+            </label>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full md:w-64 border border-gray-300 rounded-md px-3 py-2 text-black"
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col md:flex-row gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date de début
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full md:w-64 border border-gray-300 rounded-md px-3 py-2 text-black"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date de fin
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full md:w-64 border border-gray-300 rounded-md px-3 py-2 text-black"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
-      {selectedDate && (
+      {showContent && (
         <div id="printable-production">
           <h3 className="text-md font-bold text-gray-800 mb-4">
-            Total à produire pour le{" "}
-            {new Date(selectedDate).toLocaleDateString()}
+            Total à produire{" "}
+            {mode === "single"
+              ? `pour le ${new Date(selectedDate).toLocaleDateString()}`
+              : `du ${new Date(startDate).toLocaleDateString()} au ${new Date(
+                  endDate
+                ).toLocaleDateString()}`}
           </h3>
 
           {loading ? (
             <div>Chargement...</div>
-          ) : aggregatedProducts.length === 0 ? (
-            <div className="text-gray-500">Aucune commande pour ce jour.</div>
+          ) : !hasData ? (
+            <div className="text-gray-500">
+              Aucune commande pour cette sélection.
+            </div>
           ) : (
             <div className="overflow-x-auto border border-gray-200 rounded-md">
               <table className="min-w-full divide-y divide-gray-200">
@@ -1098,6 +1187,178 @@ function ProductionManager({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function MembersManager() {
+  const [members, setMembers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const fetchMembers = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/members");
+      if (res.ok) {
+        const data = await res.json();
+        setMembers(data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMembers();
+  }, []);
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (members.length >= 4) {
+      setError("La limite de 4 membres est atteinte.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: inviteEmail }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccess("Invitation envoyée avec succès.");
+        setInviteEmail("");
+        fetchMembers();
+      } else {
+        setError(data.error || "Erreur lors de l'invitation.");
+      }
+    } catch (e) {
+      setError("Erreur réseau.");
+    }
+  };
+
+  const handleRemove = async (userId: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce membre ?")) return;
+    try {
+      const res = await fetch("/api/members", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      if (res.ok) {
+        fetchMembers();
+      } else {
+        const data = await res.json();
+        alert(data.error);
+      }
+    } catch (e) {
+      alert("Erreur lors de la suppression.");
+    }
+  };
+
+  return (
+    <div className="bg-white shadow rounded-lg p-6">
+      <h2 className="text-lg font-medium text-gray-900 mb-4">
+        Gestion des Membres
+      </h2>
+
+      <div className="mb-6">
+        <form onSubmit={handleInvite} className="flex gap-4 items-end">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Inviter un membre (Email)
+            </label>
+            <input
+              type="email"
+              required
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
+              placeholder="email@exemple.com"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={members.length >= 4}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+          >
+            Inviter
+          </button>
+        </form>
+        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+        {success && <p className="text-green-500 text-sm mt-2">{success}</p>}
+        <p className="text-sm text-gray-500 mt-2">
+          Membres actuels : {members.length} / 4
+        </p>
+      </div>
+
+      <div className="overflow-x-auto border border-gray-200 rounded-md">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Utilisateur
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Email
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Rôle
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {members.map((member) => (
+              <tr key={member.id}>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    {member.imageUrl && (
+                      <Image
+                        src={member.imageUrl}
+                        alt=""
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 rounded-full mr-3"
+                      />
+                    )}
+                    <div className="text-sm font-medium text-gray-900">
+                      {member.firstName} {member.lastName}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {member.email}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {member.role === "org:member" ? "Membre" : "Admin"}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  {member.role !== "org:admin" && (
+                    <button
+                      onClick={() => handleRemove(member.userId)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Supprimer
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

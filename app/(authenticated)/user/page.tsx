@@ -2,9 +2,9 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useApp } from "../context/AppContext";
+import { useApp } from "../../context/AppContext";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Product, OrderItem } from "../types";
+import { Product, OrderItem } from "../../types";
 import { UserButton } from "@clerk/nextjs";
 
 function UserPageContent() {
@@ -215,7 +215,7 @@ function UserPageContent() {
                 </button>
               )}
               <span className="text-sm text-gray-500 hidden sm:inline">
-                {user?.role === "user" ? "Utilisateur" : "Admin"}
+                {user?.name}
               </span>
               <UserButton />
             </div>

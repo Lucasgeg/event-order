@@ -25,6 +25,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const period = searchParams.get("period");
   const dateParam = searchParams.get("date");
+  const startDateParam = searchParams.get("startDate");
+  const endDateParam = searchParams.get("endDate");
 
   try {
     const { orgId } = await auth();
@@ -40,7 +42,21 @@ export async function GET(request: Request) {
     // Set to beginning of day to include orders for today in "upcoming"
     now.setHours(0, 0, 0, 0);
 
-    if (dateParam) {
+    if (startDateParam && endDateParam) {
+      // Filter by date range
+      const start = new Date(startDateParam);
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date(endDateParam);
+      end.setHours(23, 59, 59, 999);
+
+      whereClause = {
+        pickupDate: {
+          gte: start,
+          lte: end,
+        },
+      };
+    } else if (dateParam) {
       // Filter by specific date
       const startOfDay = new Date(dateParam);
       startOfDay.setHours(0, 0, 0, 0);

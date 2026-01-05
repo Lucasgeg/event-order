@@ -44,17 +44,42 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    // 1. Prepare PDF and OCR
-    const fileBuffer = await file.arrayBuffer();
-    const pdfDoc = await PDFDocument.load(fileBuffer);
-    const pageCount = pdfDoc.getPageCount();
+    // 1. Identify File Type and Validate
+    const mimeType = file.type;
+    const fileName = file.name.toLowerCase();
+
+    const isPdf = mimeType === "application/pdf" || fileName.endsWith(".pdf");
+    const isImage =
+      mimeType.startsWith("image/") ||
+      fileName.endsWith(".png") ||
+      fileName.endsWith(".jpg") ||
+      fileName.endsWith(".jpeg") ||
+      fileName.endsWith(".webp");
+    const isText =
+      mimeType.startsWith("text/") ||
+      mimeType === "application/json" ||
+      fileName.endsWith(".txt") ||
+      fileName.endsWith(".md") ||
+      fileName.endsWith(".json") ||
+      fileName.endsWith(".csv");
+
+    if (!isPdf && !isImage && !isText) {
+      return NextResponse.json(
+        {
+          error:
+            "Format de fichier non supporté. Veuillez utiliser PDF, PNG, JPG, WEBP ou un fichier texte.",
+        },
+        { status: 400 }
+      );
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const allParsedResults: any[] = [];
+    let rawTextContent = "";
 
-    const callOcr = async (blob: Blob) => {
+    const callOcr = async (blob: Blob, filename: string) => {
       const ocrFormData = new FormData();
-      ocrFormData.append("file", blob, "file.pdf");
+      ocrFormData.append("file", blob, filename);
       ocrFormData.append("language", "fre");
       ocrFormData.append("isTable", "true");
       ocrFormData.append("OCREngine", "1");
@@ -69,9 +94,58 @@ export async function POST(request: Request) {
       return await response.json();
     };
 
-    if (pageCount <= 3) {
-      const blob = new Blob([fileBuffer], { type: "application/pdf" });
-      const ocrData = await callOcr(blob);
+    if (isText) {
+      rawTextContent = await file.text();
+    } else if (isPdf) {
+      const fileBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(fileBuffer);
+      const pageCount = pdfDoc.getPageCount();
+
+      if (pageCount <= 3) {
+        const blob = new Blob([fileBuffer], { type: "application/pdf" });
+        const ocrData = await callOcr(blob, "file.pdf");
+
+        if (ocrData.IsErroredOnProcessing) {
+          return NextResponse.json(
+            { error: ocrData.ErrorMessage },
+            { status: 500 }
+          );
+        }
+        if (ocrData.ParsedResults) {
+          allParsedResults.push(...ocrData.ParsedResults);
+        }
+      } else {
+        // Split into chunks of 3 pages
+        const chunkSize = 3;
+        for (let i = 0; i < pageCount; i += chunkSize) {
+          const subDoc = await PDFDocument.create();
+          const pageIndices = [];
+          for (let j = 0; j < chunkSize && i + j < pageCount; j++) {
+            pageIndices.push(i + j);
+          }
+          const copiedPages = await subDoc.copyPages(pdfDoc, pageIndices);
+          copiedPages.forEach((page) => subDoc.addPage(page));
+          const pdfBytes = await subDoc.save();
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
+          const ocrData = await callOcr(blob, "chunk.pdf");
+
+          if (ocrData.IsErroredOnProcessing) {
+            return NextResponse.json(
+              { error: `Error on chunk ${i}: ${ocrData.ErrorMessage}` },
+              { status: 500 }
+            );
+          }
+          if (ocrData.ParsedResults) {
+            allParsedResults.push(...ocrData.ParsedResults);
+          }
+        }
+      }
+    } else if (isImage) {
+      const fileBuffer = await file.arrayBuffer();
+      const blob = new Blob([fileBuffer], { type: mimeType });
+      const ocrData = await callOcr(blob, fileName);
 
       if (ocrData.IsErroredOnProcessing) {
         return NextResponse.json(
@@ -82,49 +156,27 @@ export async function POST(request: Request) {
       if (ocrData.ParsedResults) {
         allParsedResults.push(...ocrData.ParsedResults);
       }
-    } else {
-      // Split into chunks of 3 pages
-      const chunkSize = 3;
-      for (let i = 0; i < pageCount; i += chunkSize) {
-        const subDoc = await PDFDocument.create();
-        const pageIndices = [];
-        for (let j = 0; j < chunkSize && i + j < pageCount; j++) {
-          pageIndices.push(i + j);
-        }
-        const copiedPages = await subDoc.copyPages(pdfDoc, pageIndices);
-        copiedPages.forEach((page) => subDoc.addPage(page));
-        const pdfBytes = await subDoc.save();
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
-        const ocrData = await callOcr(blob);
-
-        if (ocrData.IsErroredOnProcessing) {
-          return NextResponse.json(
-            { error: `Error on chunk ${i}: ${ocrData.ErrorMessage}` },
-            { status: 500 }
-          );
-        }
-        if (ocrData.ParsedResults) {
-          allParsedResults.push(...ocrData.ParsedResults);
-        }
-      }
-    }
-
-    if (allParsedResults.length === 0) {
-      return NextResponse.json(
-        { error: "No text found in PDF" },
-        { status: 400 }
-      );
     }
 
     // 2. Clean text
-    let texteComplet = allParsedResults
-      .map(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (result: any) => result.ParsedText
-      )
-      .join(" ");
+    let texteComplet = "";
+
+    if (isText) {
+      texteComplet = rawTextContent;
+    } else {
+      if (allParsedResults.length === 0) {
+        return NextResponse.json(
+          { error: "No text found in file" },
+          { status: 400 }
+        );
+      }
+      texteComplet = allParsedResults
+        .map(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (result: any) => result.ParsedText
+        )
+        .join(" ");
+    }
 
     texteComplet = texteComplet
       .replace(/[\r\n\t]+/g, " ")

@@ -139,7 +139,7 @@ export async function POST(req: Request) {
           {
             from: "Cet Extra <no-reply@cetextra.fr>",
             to: adminEmail,
-            subject: "Bienvenue sur LG Order Register",
+            subject: "Bienvenue sur Cahier du Chef",
             react: WelcomeEmail({
               email: adminEmail,
               password: adminPassword,
@@ -149,7 +149,7 @@ export async function POST(req: Request) {
           {
             from: "Cet Extra <no-reply@cetextra.fr>",
             to: memberEmail,
-            subject: "Bienvenue sur LG Order Register",
+            subject: "Bienvenue sur Cahier du Chef",
             react: WelcomeEmail({
               email: memberEmail,
               password: memberPassword,

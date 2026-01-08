@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LG Order Register",
+  title: "Cahier du Chef",
   description: "Order management system",
 };
 

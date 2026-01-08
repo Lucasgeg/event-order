@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
 import JobTitleRotator from "./components/JobTitleRotator";
+import ClickableImage from "./components/ClickableImage";
 import {
   ChefHat,
   ClipboardList,
@@ -14,12 +15,11 @@ import {
 
 export const metadata: Metadata = {
   title:
-    "LG Order Register - Gestion de commandes pour Traiteurs et Métiers de Bouche",
+    "Cahier du Chef - Gestion de commandes pour Traiteurs et Métiers de Bouche",
   description:
-    "Optimisez votre activité de traiteur, boulangerie ou restaurant avec LG Order Register. Génération de menus, listes de production et gestion d'équipe simplifiée.",
+    "Optimisez votre activité de traiteur, boulangerie ou restaurant avec Cahier du Chef. Génération de menus, listes de production et gestion d'équipe simplifiée.",
   openGraph: {
-    title:
-      "LG Order Register - La solution tout-en-un pour les métiers de bouche",
+    title: "Cahier du Chef - La solution tout-en-un pour les métiers de bouche",
     description:
       "Gagnez du temps sur vos commandes et votre production. Essayez gratuitement.",
     type: "website",
@@ -37,16 +37,22 @@ export default function LandingPage() {
             <div className="flex items-center">
               <Image
                 src="/logo.png"
-                alt="LG Order Register Logo"
+                alt="Cahier du Chef Logo"
                 width={32}
                 height={32}
                 className="h-8 w-8"
               />
               <span className="ml-2 text-xl font-bold text-gray-900">
-                LG Order Register
+                Cahier du Chef
               </span>
             </div>
             <div className="flex items-center space-x-4">
+              <Link
+                href="/a-propos"
+                className="text-gray-600 hover:text-gray-900 font-medium"
+              >
+                À propos
+              </Link>
               <Link
                 href="/login"
                 className="text-gray-600 hover:text-gray-900 font-medium"
@@ -89,21 +95,14 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center">
-              <div className="relative mx-auto w-full rounded-lg shadow-lg lg:max-w-md overflow-hidden">
-                {/* 
-                  PLACEHOLDER SCREENSHOT: DASHBOARD PRINCIPAL
-                  Screenshot à faire : Vue d'ensemble du tableau de bord admin montrant les onglets (Menu, Produits, Commandes, etc.)
-                  et peut-être la liste des catégories ou des produits.
-                  Cela montre l'interface claire et organisée.
-                */}
-                <div className="bg-gray-100 aspect-video flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
-                  <div className="text-center p-6">
-                    <LayoutDashboard className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-500 text-sm">
-                      Screenshot: Tableau de bord Admin
-                    </p>
-                  </div>
-                </div>
+              <div className="relative mx-auto w-full rounded-lg shadow-lg lg:max-w-md overflow-hidden bg-white">
+                <ClickableImage
+                  src="/AdminDashboard.png"
+                  alt="Interface du tableau de bord Cahier du Chef"
+                  width={600}
+                  height={400}
+                  className="w-full h-auto"
+                />
               </div>
             </div>
           </div>
@@ -153,21 +152,14 @@ export default function LandingPage() {
             </div>
 
             <div className="mt-10 -mx-4 relative lg:mt-0">
-              {/* 
-                PLACEHOLDER SCREENSHOT: GÉNÉRATION DE MENU
-                Screenshot à faire : L'interface d'upload de fichier PDF dans l'onglet "Menu" 
-                ou le résultat de l'importation avec les catégories générées.
-                Montre la simplicité de l'import.
-              */}
               <div className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 mx-4">
-                <div className="bg-gray-100 aspect-4/3 flex items-center justify-center border-2 border-dashed border-gray-300 m-4 rounded-lg">
-                  <div className="text-center p-6">
-                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-500 text-sm">
-                      Screenshot: Import & Génération Menu
-                    </p>
-                  </div>
-                </div>
+                <ClickableImage
+                  src="/pdfToProduct.png"
+                  alt="Importation de fichier et génération automatique de produits"
+                  width={600}
+                  height={400}
+                  className="w-full h-auto"
+                />
               </div>
             </div>
           </div>
@@ -203,21 +195,14 @@ export default function LandingPage() {
               </div>
 
               <div className="mt-10 -mx-4 relative lg:mt-0 lg:col-start-1">
-                {/* 
-                  PLACEHOLDER SCREENSHOT: LISTE DE PRODUCTION
-                  Screenshot à faire : L'onglet "Production" montrant le tableau récapitulatif 
-                  des quantités à produire pour une date donnée.
-                  Montre l'utilité concrète pour la cuisine.
-                */}
                 <div className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 mx-4">
-                  <div className="bg-gray-100 aspect-4/3 flex items-center justify-center border-2 border-dashed border-gray-300 m-4 rounded-lg">
-                    <div className="text-center p-6">
-                      <ClipboardList className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-500 text-sm">
-                        Screenshot: Liste de Production
-                      </p>
-                    </div>
-                  </div>
+                  <ClickableImage
+                    src="/productionDashboard.png"
+                    alt="Tableau de suivi de production journalier"
+                    width={600}
+                    height={400}
+                    className="w-full h-auto"
+                  />
                 </div>
               </div>
             </div>
@@ -284,8 +269,8 @@ export default function LandingPage() {
             <span className="block">Prêt à optimiser votre activité ?</span>
           </h2>
           <p className="mt-4 text-lg leading-6 text-blue-200">
-            Rejoignez les traiteurs qui gagnent du temps chaque jour avec LG
-            Order Register.
+            Rejoignez les entrepreneurs qui gagnent du temps chaque jour avec{" "}
+            <br /> Cahier du Chef.
           </p>
           <Link
             href="/login"
@@ -303,18 +288,27 @@ export default function LandingPage() {
             <div className="flex items-center">
               <Image
                 src="/logo.png"
-                alt="LG Order Register Logo"
+                alt="Cahier du Chef Logo"
                 width={24}
                 height={24}
                 className="h-6 w-6 grayscale opacity-50"
               />
               <span className="ml-2 text-gray-500 font-medium">
-                LG Order Register
+                Cahier du Chef
               </span>
             </div>
-            <p className="text-center text-base text-gray-400">
-              &copy; 2026 LG Order Register. Tous droits réservés.
-            </p>
+            <div className="flex items-center space-x-6">
+              <Link
+                href="/a-propos"
+                className="text-gray-500 hover:text-gray-900 transition-colors"
+                title="À propos"
+              >
+                À propos
+              </Link>
+              <p className="text-center text-base text-gray-400">
+                &copy; 2026 Cahier du Chef. Tous droits réservés.
+              </p>
+            </div>
           </div>
         </div>
       </footer>

@@ -211,7 +211,7 @@ export default function LoginPage() {
           <div className="flex justify-center">
             <Image
               src="/logo.png"
-              alt="LG Order Register Logo"
+              alt="Cahier du Chef Logo"
               width={64}
               height={64}
               className="h-16 w-16"
@@ -225,7 +225,7 @@ export default function LoginPage() {
           </h2>
           {view === "sign-in" && (
             <p className="mt-2 text-center text-sm text-gray-600">
-              Connectez-vous à votre compte LG Order Register
+              Connectez-vous à votre compte Cahier du Chef
             </p>
           )}
           {view === "verify-2fa" && (

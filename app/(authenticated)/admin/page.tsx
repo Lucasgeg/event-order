@@ -983,6 +983,7 @@ function ProductionManager({
   const [endDate, setEndDate] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
+  const [hiddenCategories, setHiddenCategories] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -1058,6 +1059,21 @@ function ProductionManager({
     (a, b) => a.name.localeCompare(b.name)
   );
 
+  // Group by category
+  const productsByCategory = aggregatedProducts.reduce(
+    (acc, product) => {
+      const category = product.categoryName || "Sans catégorie";
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(product);
+      return acc;
+    },
+    {} as Record<string, typeof aggregatedProducts>
+  );
+
+  const sortedCategories = Object.keys(productsByCategory).sort();
+
   const handlePrint = () => {
     window.print();
   };
@@ -1073,6 +1089,9 @@ function ProductionManager({
         @media print {
           body * {
             visibility: hidden;
+          }
+          .no-print {
+            display: none !important;
           }
           #printable-production,
           #printable-production * {
@@ -1181,63 +1200,96 @@ function ProductionManager({
       </div>
 
       {showContent && (
-        <div id="printable-production">
-          <h3 className="text-md font-bold text-gray-800 mb-4">
-            Total à produire{" "}
-            {mode === "single"
-              ? `pour le ${new Date(selectedDate).toLocaleDateString()}`
-              : `du ${new Date(startDate).toLocaleDateString()} au ${new Date(
-                  endDate
-                ).toLocaleDateString()}`}
-          </h3>
-
-          {loading ? (
-            <div>Chargement...</div>
-          ) : !hasData ? (
-            <div className="text-gray-500">
-              Aucune commande pour cette sélection.
-            </div>
-          ) : (
-            <div className="overflow-x-auto border border-gray-200 rounded-md">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Catégorie
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Sous-catégorie
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Produit
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Quantité Totale
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {aggregatedProducts.map((item) => (
-                    <tr key={item.name}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.categoryName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.subCategoryName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {item.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
-                        {item.quantity}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        <>
+          {hasData && (
+            <div className="mb-4 p-4 bg-gray-50 rounded-md border border-gray-200 no-print">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">
+                Filtrer les catégories
+              </h4>
+              <div className="flex flex-wrap gap-3">
+                {sortedCategories.map((category) => (
+                  <label key={category} className="inline-flex items-center">
+                    <input
+                      type="checkbox"
+                      className="form-checkbox text-blue-600 rounded"
+                      checked={!hiddenCategories.includes(category)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setHiddenCategories(
+                            hiddenCategories.filter((c) => c !== category)
+                          );
+                        } else {
+                          setHiddenCategories([...hiddenCategories, category]);
+                        }
+                      }}
+                    />
+                    <span className="ml-2 text-sm text-gray-700">
+                      {category}
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
           )}
-        </div>
+
+          <div id="printable-production">
+            <h3 className="text-md font-bold text-gray-800 mb-4">
+              Total à produire{" "}
+              {mode === "single"
+                ? `pour le ${new Date(selectedDate).toLocaleDateString()}`
+                : `du ${new Date(startDate).toLocaleDateString()} au ${new Date(
+                    endDate
+                  ).toLocaleDateString()}`}
+            </h3>
+
+            {loading ? (
+              <div>Chargement...</div>
+            ) : !hasData ? (
+              <div className="text-gray-500">
+                Aucune commande pour cette sélection.
+              </div>
+            ) : (
+              <div className="overflow-x-auto border border-gray-200 rounded-md">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Produit
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Quantité Totale
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {sortedCategories
+                      .filter((c) => !hiddenCategories.includes(c))
+                      .map((categoryName) => [
+                        <tr key={`cat-${categoryName}`} className="bg-gray-100">
+                          <td
+                            colSpan={2}
+                            className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 uppercase"
+                          >
+                            {categoryName}
+                          </td>
+                        </tr>,
+                        ...productsByCategory[categoryName].map((item) => (
+                          <tr key={item.name}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 pl-10">
+                              {item.name}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
+                              {item.quantity}
+                            </td>
+                          </tr>
+                        )),
+                      ])}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

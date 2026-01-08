@@ -13,7 +13,7 @@ async function main() {
     update: {},
     create: {
       id: TENANT_ID,
-      name: "LG Order Register Demo",
+      name: "Cahier du Chef Demo",
     },
   });
 

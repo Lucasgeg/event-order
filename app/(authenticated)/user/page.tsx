@@ -170,6 +170,7 @@ function UserPageContent() {
   };
 
   const filteredProducts = products.filter((p) => {
+    if (p.isActive === false) return false;
     if (selectedCategory && p.categoryId !== selectedCategory) return false;
     if (selectedSubCategory && p.subCategoryId !== selectedSubCategory)
       return false;

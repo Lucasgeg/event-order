@@ -472,6 +472,7 @@ function ProductsManager({
       price: product.price,
       categoryId: product.categoryId,
       subCategoryId: product.subCategoryId,
+      isActive: product.isActive,
     });
   };
 
@@ -490,6 +491,7 @@ function ProductsManager({
       designation: editFormData.designation,
       price: Number(editFormData.price),
       subCategoryId: editFormData.subCategoryId,
+      isActive: editFormData.isActive ?? true,
     };
     updateProduct(data);
     setEditingProductId(null);
@@ -589,6 +591,9 @@ function ProductsManager({
                 Prix
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actif
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Catégorie
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -636,6 +641,19 @@ function ProductsManager({
                           })
                         }
                         className="border border-gray-300 rounded px-2 py-1 w-24 text-black"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <input
+                        type="checkbox"
+                        checked={editFormData.isActive ?? true}
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            isActive: e.target.checked,
+                          })
+                        }
+                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -706,6 +724,30 @@ function ProductsManager({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {product.price} €
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <button
+                      onClick={() =>
+                        updateProduct({
+                          ...product,
+                          isActive: !product.isActive,
+                        })
+                      }
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                        product.isActive !== false
+                          ? "bg-indigo-600"
+                          : "bg-gray-200"
+                      }`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                          product.isActive !== false
+                            ? "translate-x-5"
+                            : "translate-x-0"
+                        }`}
+                      />
+                    </button>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {category?.name || "-"}

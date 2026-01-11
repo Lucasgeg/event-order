@@ -63,6 +63,7 @@ model Product {
   orderItems    OrderItem[]
   tenant        Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   tenantId      String
+  isActive      Boolean      @default(true)
 }
 
 model Order {

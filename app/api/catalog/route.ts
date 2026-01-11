@@ -29,9 +29,7 @@ export async function GET() {
       }),
       prisma.product.findMany({
         where: { tenantId: orgId },
-        orderBy: {
-          designation: "asc",
-        },
+        orderBy: [{ isActive: "desc" }, { designation: "asc" }],
       }),
     ]);
 
@@ -134,6 +132,7 @@ export async function PUT(request: Request) {
             price: data.price ? parseFloat(data.price) : undefined,
             categoryId: data.categoryId,
             subCategoryId: data.subCategoryId,
+            isActive: data.isActive,
           },
         });
         break;

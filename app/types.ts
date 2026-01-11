@@ -12,6 +12,7 @@ export interface Product {
   price: number;
   categoryId: string;
   subCategoryId?: string;
+  isActive: boolean;
 }
 
 export interface SubCategory {

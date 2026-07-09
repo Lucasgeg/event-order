@@ -190,9 +190,9 @@ export async function POST(request: Request) {
     const mots = texteComplet.split(" ").slice(0, 4000);
     const cleanedText = mots.join(" ");
 
-    // 3. Call Perplexity
-    const perplexityBody = {
-      model: "sonar",
+    // 3. Call Groq
+    const groqBody = {
+      model: "llama-3.3-70b-versatile",
       messages: [
         {
           role: "user",
@@ -201,35 +201,35 @@ export async function POST(request: Request) {
       ],
       max_tokens: 2500,
       temperature: 0.1,
+      response_format: { type: "json_object" },
     };
 
-    const perplexityResponse = await fetch(
-      "https://api.perplexity.ai/chat/completions",
+    const groqResponse = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(perplexityBody),
+        body: JSON.stringify(groqBody),
       }
     );
 
-    if (!perplexityResponse.ok) {
-      const errorText = await perplexityResponse.text();
+    if (!groqResponse.ok) {
+      const errorText = await groqResponse.text();
       return NextResponse.json(
         {
-          error: `Perplexity API error: ${perplexityResponse.status} ${errorText}`,
+          error: `Groq API error: ${groqResponse.status} ${errorText}`,
         },
-        { status: perplexityResponse.status }
+        { status: groqResponse.status }
       );
     }
 
-    const perplexityData = await perplexityResponse.json();
+    const groqData = await groqResponse.json();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const aiResponseContent = (perplexityData as any).choices[0].message
-      .content;
+    const aiResponseContent = (groqData as any).choices[0].message.content;
 
     // 1. Enlève markdown ```
     const jsonStr = aiResponseContent

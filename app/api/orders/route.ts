@@ -279,6 +279,12 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const { orgId } = await auth();
+
+    if (!orgId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 
@@ -286,9 +292,13 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    await prisma.order.delete({
-      where: { id },
+    const result = await prisma.order.deleteMany({
+      where: { id, tenantId: orgId },
     });
+
+    if (result.count === 0) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

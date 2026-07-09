@@ -6,6 +6,9 @@ import { useAuth, useSignIn } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
 import Image from "next/image";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Button, Input, Label, LoadingBlock } from "../components/ui";
 
 export default function LoginPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
@@ -34,8 +37,8 @@ export default function LoginPage() {
 
   if (!isLoaded) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Chargement...</div>
+      <div className="flex min-h-screen items-center justify-center bg-cream">
+        <LoadingBlock />
       </div>
     );
   }
@@ -205,97 +208,107 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 bg-white p-8 shadow rounded-lg">
-        <div>
-          <div className="flex justify-center">
-            <Image
-              src="/logo.png"
-              alt="Cahier du Chef Logo"
-              width={64}
-              height={64}
-              className="h-16 w-16"
-            />
-          </div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            {view === "sign-in" && "Connexion"}
-            {view === "forgot-password" && "Mot de passe oublié"}
-            {view === "reset-password" && "Réinitialisation"}
-            {view === "verify-2fa" && "Vérification 2FA"}
-          </h2>
-          {view === "sign-in" && (
-            <p className="mt-2 text-center text-sm text-gray-600">
-              Connectez-vous à votre compte Cahier du Chef
-            </p>
-          )}
-          {view === "verify-2fa" && (
-            <p className="mt-2 text-center text-sm text-gray-600">
-              Un code de vérification a été envoyé à votre adresse email.
-            </p>
-          )}
+    <div className="flex min-h-screen flex-col items-center justify-center bg-cream px-4 py-12 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md">
+        <div className="mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-soft hover:text-ink transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            Retour à l&apos;accueil
+          </Link>
         </div>
 
-        {successMessage && (
-          <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded relative text-sm">
-            {successMessage}
+        <div className="bg-surface rounded-2xl border border-line shadow-sm p-8 space-y-6">
+          <div>
+            <div className="flex justify-center">
+              <Image
+                src="/logo.png"
+                alt="Cahier du Chef Logo"
+                width={64}
+                height={64}
+                className="h-16 w-16"
+              />
+            </div>
+            <h1 className="mt-5 text-center font-display text-3xl font-bold tracking-tight text-ink">
+              {view === "sign-in" && "Connexion"}
+              {view === "forgot-password" && "Mot de passe oublié"}
+              {view === "reset-password" && "Réinitialisation"}
+              {view === "verify-2fa" && "Vérification 2FA"}
+            </h1>
+            {view === "sign-in" && (
+              <p className="mt-2 text-center text-sm text-ink-soft">
+                Connectez-vous à votre compte Cahier du Chef
+              </p>
+            )}
+            {view === "forgot-password" && (
+              <p className="mt-2 text-center text-sm text-ink-soft">
+                Saisissez votre email pour recevoir un code de réinitialisation.
+              </p>
+            )}
+            {view === "verify-2fa" && (
+              <p className="mt-2 text-center text-sm text-ink-soft">
+                Un code de vérification a été envoyé à votre adresse email.
+              </p>
+            )}
           </div>
-        )}
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded relative text-sm">
-            {error}
-            <button
-              onClick={() => {
-                setView("forgot-password");
-                setError("");
-                setSuccessMessage("");
-              }}
-              className="underline ml-2 hover:text-red-800"
+          {successMessage && (
+            <div className="bg-olive-soft border border-olive/30 text-olive-dark px-4 py-3 rounded-lg text-sm">
+              {successMessage}
+            </div>
+          )}
+
+          {error && (
+            <div
+              role="alert"
+              className="bg-danger-soft border border-danger/20 text-danger px-4 py-3 rounded-lg text-sm"
             >
-              Réinitialiser ?
-            </button>
-          </div>
-        )}
+              {error}
+              <button
+                onClick={() => {
+                  setView("forgot-password");
+                  setError("");
+                  setSuccessMessage("");
+                }}
+                className="underline ml-2 hover:text-danger-dark cursor-pointer"
+              >
+                Réinitialiser ?
+              </button>
+            </div>
+          )}
 
-        {view === "sign-in" && (
-          <form className="mt-8 space-y-6" onSubmit={handleSignIn}>
-            <div className="-space-y-px rounded-md shadow-sm">
+          {view === "sign-in" && (
+            <form className="space-y-5" onSubmit={handleSignIn}>
               <div>
-                <label htmlFor="email-address" className="sr-only">
-                  Adresse email
-                </label>
-                <input
+                <Label htmlFor="email-address">Adresse email</Label>
+                <Input
                   id="email-address"
                   name="email"
                   type="email"
                   autoComplete="email"
                   required
-                  className="relative block w-full rounded-t-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                  placeholder="Adresse email"
+                  placeholder="vous@exemple.fr"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div>
-                <label htmlFor="password" className="sr-only">
-                  Mot de passe
-                </label>
-                <input
+                <Label htmlFor="password">Mot de passe</Label>
+                <Input
                   id="password"
                   name="password"
                   type="password"
                   autoComplete="current-password"
                   required
-                  className="relative block w-full rounded-b-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                  placeholder="Mot de passe"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-            </div>
 
-            <div className="flex items-center justify-end">
-              <div className="text-sm">
+              <div className="flex items-center justify-end">
                 <button
                   type="button"
                   onClick={() => {
@@ -303,187 +316,143 @@ export default function LoginPage() {
                     setError("");
                     setSuccessMessage("");
                   }}
-                  className="font-medium text-indigo-600 hover:text-indigo-500"
+                  className="text-sm font-semibold text-primary hover:text-primary-dark transition-colors cursor-pointer"
                 >
                   Mot de passe oublié ?
                 </button>
               </div>
-            </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="group relative flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
-              >
+              <Button type="submit" loading={loading} className="w-full">
                 {loading ? "Connexion..." : "Se connecter"}
-              </button>
-            </div>
-          </form>
-        )}
+              </Button>
+            </form>
+          )}
 
-        {view === "forgot-password" && (
-          <form className="mt-8 space-y-6" onSubmit={handleForgotPassword}>
-            <div>
-              <label
-                htmlFor="email-address-reset"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                Adresse email
-              </label>
-              <div className="mt-2">
-                <input
+          {view === "forgot-password" && (
+            <form className="space-y-5" onSubmit={handleForgotPassword}>
+              <div>
+                <Label htmlFor="email-address-reset">Adresse email</Label>
+                <Input
                   id="email-address-reset"
                   name="email"
                   type="email"
                   autoComplete="email"
                   required
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
-            </div>
 
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => {
-                  setView("sign-in");
-                  setError("");
-                  setSuccessMessage("");
-                }}
-                className="text-sm font-medium text-gray-600 hover:text-gray-500"
-              >
-                Retour
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 tline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
-              >
-                {loading ? "Envoi..." : "Envoyer le code"}
-              </button>
-            </div>
-          </form>
-        )}
-
-        {view === "reset-password" && (
-          <form className="mt-8 space-y-6" onSubmit={handleResetPassword}>
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="code"
-                  className="block text-sm font-medium leading-6 text-gray-900"
+              <div className="flex items-center justify-between gap-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setView("sign-in");
+                    setError("");
+                    setSuccessMessage("");
+                  }}
                 >
-                  Code de vérification
-                </label>
-                <div className="mt-2">
-                  <input
-                    id="code"
-                    name="code"
-                    type="text"
-                    required
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                    placeholder="Entrez le code reçu par email"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                  />
-                </div>
+                  Retour
+                </Button>
+                <Button type="submit" loading={loading}>
+                  {loading ? "Envoi..." : "Envoyer le code"}
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {view === "reset-password" && (
+            <form className="space-y-5" onSubmit={handleResetPassword}>
+              <div>
+                <Label htmlFor="code">Code de vérification</Label>
+                <Input
+                  id="code"
+                  name="code"
+                  type="text"
+                  required
+                  placeholder="Entrez le code reçu par email"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                />
               </div>
 
               <div>
-                <label
-                  htmlFor="new-password"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Nouveau mot de passe
-                </label>
-                <div className="mt-2">
-                  <input
-                    id="new-password"
-                    name="newPassword"
-                    type="password"
-                    required
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                  />
-                </div>
+                <Label htmlFor="new-password">Nouveau mot de passe</Label>
+                <Input
+                  id="new-password"
+                  name="newPassword"
+                  type="password"
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
               </div>
-            </div>
 
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => {
-                  setView("forgot-password");
-                  setError("");
-                  setSuccessMessage("");
-                }}
-                className="text-sm font-medium text-gray-600 hover:text-gray-500"
-              >
-                Retour
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
-              >
-                {loading
-                  ? "Réinitialisation..."
-                  : "Réinitialiser le mot de passe"}
-              </button>
-            </div>
-          </form>
-        )}
-        {view === "verify-2fa" && (
-          <form className="mt-8 space-y-6" onSubmit={handleVerifySecondFactor}>
-            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setView("forgot-password");
+                    setError("");
+                    setSuccessMessage("");
+                  }}
+                >
+                  Retour
+                </Button>
+                <Button type="submit" loading={loading}>
+                  {loading
+                    ? "Réinitialisation..."
+                    : "Réinitialiser le mot de passe"}
+                </Button>
+              </div>
+            </form>
+          )}
+          {view === "verify-2fa" && (
+            <form className="space-y-5" onSubmit={handleVerifySecondFactor}>
               <div>
-                <label
-                  htmlFor="code-2fa"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Code de vérification
-                </label>
-                <div className="mt-2">
-                  <input
-                    id="code-2fa"
-                    name="code"
-                    type="text"
-                    required
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                    placeholder="Entrez le code reçu par email"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                  />
-                </div>
+                <Label htmlFor="code-2fa">Code de vérification</Label>
+                <Input
+                  id="code-2fa"
+                  name="code"
+                  type="text"
+                  required
+                  placeholder="Entrez le code reçu par email"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                />
               </div>
-            </div>
 
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => {
-                  setView("sign-in");
-                  setError("");
-                  setCode("");
-                }}
-                className="text-sm font-medium text-gray-600 hover:text-gray-500"
-              >
-                Retour
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
-              >
-                {loading ? "Vérification..." : "Vérifier"}
-              </button>
-            </div>
-          </form>
-        )}
+              <div className="flex items-center justify-between gap-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setView("sign-in");
+                    setError("");
+                    setCode("");
+                  }}
+                >
+                  Retour
+                </Button>
+                <Button type="submit" loading={loading}>
+                  {loading ? "Vérification..." : "Vérifier"}
+                </Button>
+              </div>
+            </form>
+          )}
+        </div>
+
+        <p className="mt-6 text-center text-sm text-ink-soft">
+          Pas encore de compte ?{" "}
+          <Link
+            href="/inscription"
+            className="font-semibold text-primary hover:text-primary-dark transition-colors"
+          >
+            Créer une organisation
+          </Link>
+        </p>
       </div>
     </div>
   );

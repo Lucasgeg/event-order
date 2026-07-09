@@ -7,6 +7,81 @@ import { useRouter } from "next/navigation";
 import { Product, Category, Order } from "../../types";
 import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
+import {
+  LayoutGrid,
+  UtensilsCrossed,
+  ClipboardList,
+  ChefHat,
+  Users,
+  NotebookPen,
+  Pencil,
+  Trash2,
+  Check,
+  X,
+  Search,
+  Printer,
+  Sparkles,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  PackageOpen,
+} from "lucide-react";
+import {
+  Button,
+  Card,
+  CardHeader,
+  IconButton,
+  Input,
+  Select,
+  Label,
+  Badge,
+  EmptyState,
+  Segmented,
+  Th,
+  Td,
+  LoadingBlock,
+  cn,
+} from "../../components/ui";
+
+type AdminTab = "menu" | "products" | "orders" | "production" | "members";
+
+const NAV_ITEMS: {
+  key: AdminTab;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
+  {
+    key: "menu",
+    label: "Catégories",
+    description: "Organisez votre carte en catégories et sous-catégories.",
+    icon: LayoutGrid,
+  },
+  {
+    key: "products",
+    label: "Produits",
+    description: "Gérez les produits de votre catalogue et leurs prix.",
+    icon: UtensilsCrossed,
+  },
+  {
+    key: "orders",
+    label: "Commandes",
+    description: "Suivez les commandes à venir et passées de vos clients.",
+    icon: ClipboardList,
+  },
+  {
+    key: "production",
+    label: "Production",
+    description: "Consolidez les quantités à produire par jour ou période.",
+    icon: ChefHat,
+  },
+  {
+    key: "members",
+    label: "Membres",
+    description: "Invitez votre équipe et gérez les rôles.",
+    icon: Users,
+  },
+];
 
 export default function AdminPage() {
   const {
@@ -26,9 +101,7 @@ export default function AdminPage() {
     refreshData,
   } = useApp();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<
-    "menu" | "products" | "orders" | "production" | "members"
-  >("menu");
+  const [activeTab, setActiveTab] = useState<AdminTab>("menu");
 
   useEffect(() => {
     if (!isLoading) {
@@ -42,127 +115,169 @@ export default function AdminPage() {
 
   if (isLoading || !user || user.role !== "admin") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Chargement...
+      <div className="min-h-screen flex items-center justify-center bg-cream">
+        <LoadingBlock />
       </div>
     );
   }
 
+  const activeItem = NAV_ITEMS.find((item) => item.key === activeTab)!;
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Image
-                src="/logo.png"
-                alt="Logo"
-                width={32}
-                height={32}
-                className="h-8 w-8 mr-2"
-              />
-              <h1 className="text-xl font-bold text-gray-800">
-                Admin Dashboard
-              </h1>
-              <div className="ml-10 flex items-baseline space-x-4">
-                <button
-                  onClick={() => setActiveTab("menu")}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    activeTab === "menu"
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  Catégories
-                </button>
-                <button
-                  onClick={() => setActiveTab("products")}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    activeTab === "products"
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  Produits
-                </button>
-                <button
-                  onClick={() => setActiveTab("orders")}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    activeTab === "orders"
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  Commandes
-                </button>
-                <button
-                  onClick={() => setActiveTab("production")}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    activeTab === "production"
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  Production
-                </button>
-                <button
-                  onClick={() => setActiveTab("members")}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    activeTab === "members"
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  Membres
-                </button>
-                <button
-                  onClick={() => router.push("/user")}
-                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-200"
-                >
-                  Vue Utilisateur
-                </button>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <span className="mr-4 text-gray-600">Bonjour {user?.name}</span>
-              <UserButton />
-            </div>
+    <div className="min-h-screen bg-cream">
+      {/* Sidebar (desktop) */}
+      <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-64 bg-surface border-r border-line z-40">
+        <div className="flex items-center gap-3 px-5 h-16 border-b border-line">
+          <Image
+            src="/logo.png"
+            alt="Logo Cahier du Chef"
+            width={32}
+            height={32}
+            className="h-8 w-8"
+          />
+          <span className="font-display text-lg font-bold text-ink">
+            Cahier du Chef
+          </span>
+        </div>
+
+        <nav className="flex-1 px-3 py-4 space-y-1" aria-label="Navigation principale">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.key;
+            return (
+              <button
+                key={item.key}
+                onClick={() => setActiveTab(item.key)}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "flex items-center gap-3 w-full h-11 px-3 rounded-lg text-sm font-semibold transition-colors duration-200 cursor-pointer",
+                  isActive
+                    ? "bg-gold-soft text-primary"
+                    : "text-ink-soft hover:bg-parchment hover:text-ink"
+                )}
+              >
+                <Icon
+                  className={cn(
+                    "h-5 w-5",
+                    isActive ? "text-gold-dark" : "text-ink-soft"
+                  )}
+                />
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="px-3 py-4 border-t border-line space-y-3">
+          <button
+            onClick={() => router.push("/user")}
+            className="flex items-center gap-3 w-full h-11 px-3 rounded-lg text-sm font-semibold text-ink-soft hover:bg-parchment hover:text-ink transition-colors duration-200 cursor-pointer"
+          >
+            <NotebookPen className="h-5 w-5" />
+            Prise de commande
+          </button>
+          <div className="flex items-center gap-3 px-3">
+            <UserButton />
+            <span className="text-sm text-ink-soft truncate">{user?.name}</span>
           </div>
         </div>
-      </nav>
+      </aside>
 
-      <main className="mx-auto py-6 sm:px-6 lg:px-8">
-        {activeTab === "menu" && (
-          <CategoriesManager
-            categories={categories}
-            addCategory={addCategory}
-            updateCategory={updateCategory}
-            deleteCategory={deleteCategory}
-            subCategories={subCategories}
-            addSubCategory={addSubCategory}
-            deleteSubCategory={deleteSubCategory}
-            refreshData={refreshData}
-          />
-        )}
-        {activeTab === "products" && (
-          <ProductsManager
-            products={products}
-            categories={categories}
-            subCategories={subCategories}
-            addProduct={addProduct}
-            updateProduct={updateProduct}
-            deleteProduct={deleteProduct}
-          />
-        )}
-        {activeTab === "orders" && <OrdersManager />}
-        {activeTab === "production" && (
-          <ProductionManager
-            categories={categories}
-            subCategories={subCategories}
-          />
-        )}
-        {activeTab === "members" && <MembersManager />}
-      </main>
+      {/* Mobile header */}
+      <header className="lg:hidden sticky top-0 z-40 bg-surface border-b border-line">
+        <div className="flex items-center justify-between h-14 px-4">
+          <div className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="Logo Cahier du Chef"
+              width={28}
+              height={28}
+              className="h-7 w-7"
+            />
+            <span className="font-display text-base font-bold text-ink">
+              Cahier du Chef
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push("/user")}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-semibold text-ink-soft hover:bg-parchment transition-colors cursor-pointer"
+            >
+              <NotebookPen className="h-4 w-4" />
+              Commande
+            </button>
+            <UserButton />
+          </div>
+        </div>
+        <nav
+          className="flex gap-1 px-3 pb-2 overflow-x-auto"
+          aria-label="Navigation principale"
+        >
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.key;
+            return (
+              <button
+                key={item.key}
+                onClick={() => setActiveTab(item.key)}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors duration-200 cursor-pointer",
+                  isActive
+                    ? "bg-gold-soft text-primary"
+                    : "text-ink-soft hover:bg-parchment"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+      </header>
+
+      {/* Main content */}
+      <div className="lg:pl-64">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+          <div className="mb-6">
+            <h1 className="font-display text-2xl lg:text-3xl font-bold text-ink">
+              {activeItem.label}
+            </h1>
+            <p className="mt-1 text-ink-soft">{activeItem.description}</p>
+          </div>
+
+          {activeTab === "menu" && (
+            <CategoriesManager
+              categories={categories}
+              addCategory={addCategory}
+              updateCategory={updateCategory}
+              deleteCategory={deleteCategory}
+              subCategories={subCategories}
+              addSubCategory={addSubCategory}
+              deleteSubCategory={deleteSubCategory}
+              refreshData={refreshData}
+            />
+          )}
+          {activeTab === "products" && (
+            <ProductsManager
+              products={products}
+              categories={categories}
+              subCategories={subCategories}
+              addProduct={addProduct}
+              updateProduct={updateProduct}
+              deleteProduct={deleteProduct}
+            />
+          )}
+          {activeTab === "orders" && <OrdersManager />}
+          {activeTab === "production" && (
+            <ProductionManager
+              categories={categories}
+              subCategories={subCategories}
+            />
+          )}
+          {activeTab === "members" && <MembersManager />}
+        </main>
+      </div>
     </div>
   );
 }
@@ -260,43 +375,46 @@ function CategoriesManager({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-medium text-gray-900">
-            Génération automatique
-          </h2>
-          <button
-            onClick={() => setShowAutoGeneration(!showAutoGeneration)}
-            className="text-sm text-blue-600 hover:text-blue-800 focus:outline-none"
-          >
-            {showAutoGeneration ? "Masquer" : "Afficher"}
-          </button>
-        </div>
+      <Card className="p-6">
+        <CardHeader
+          title="Génération automatique"
+          description="Importez votre carte en PDF, l'IA en extrait catégories et produits."
+          action={
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAutoGeneration(!showAutoGeneration)}
+            >
+              {showAutoGeneration ? "Masquer" : "Afficher"}
+            </Button>
+          }
+        />
 
         {showAutoGeneration && (
           <>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               <input
                 type="file"
                 accept=".pdf"
                 onChange={handleFileSelect}
                 disabled={isGenerating}
-                className="block w-full text-sm text-gray-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-md file:border-0
-              file:text-sm file:font-semibold
-              file:bg-blue-50 file:text-blue-700
-              hover:file:bg-blue-100"
+                className="block w-full text-sm text-ink-soft cursor-pointer
+              file:mr-4 file:h-11 file:px-4 file:py-2.5
+              file:rounded-lg file:border-0
+              file:text-sm file:font-semibold file:cursor-pointer
+              file:bg-gold-soft file:text-primary
+              hover:file:bg-gold/25 file:transition-colors"
               />
-              <button
+              <Button
                 onClick={handleGenerate}
-                disabled={!selectedFile || isGenerating}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed whitespace-nowrap"
+                disabled={!selectedFile}
+                loading={isGenerating}
               >
+                <Sparkles className="h-4 w-4" aria-hidden />
                 {isGenerating ? "Traitement..." : "Générer"}
-              </button>
+              </Button>
             </div>
-            <div className="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
+            <div className="mt-4 p-4 bg-gold-soft/60 border-l-4 border-gold rounded-r-lg text-ink">
               <p className="text-sm">
                 <span className="font-bold">Note importante :</span> La
                 génération du menu est réalisée par une intelligence
@@ -307,108 +425,125 @@ function CategoriesManager({
             </div>
           </>
         )}
-      </div>
+      </Card>
 
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-lg font-medium mb-4 text-gray-900">
-          Gestion des Catégories
-        </h2>
+      <Card className="p-6">
+        <CardHeader
+          title="Gestion des catégories"
+          description="Ajoutez, renommez ou supprimez les catégories de votre carte."
+        />
 
         <div className="flex gap-2 mb-6">
-          <input
+          <Input
             type="text"
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleAddCategory();
+            }}
             placeholder="Nouvelle catégorie"
-            className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-black"
+            className="flex-1"
           />
-          <button
-            onClick={handleAddCategory}
-            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-          >
+          <Button onClick={handleAddCategory}>
+            <Plus className="h-4 w-4" aria-hidden />
             Ajouter
-          </button>
+          </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {categories &&
-            categories.map((category: Category) => (
+        {categories.length === 0 ? (
+          <EmptyState
+            icon={<LayoutGrid className="h-6 w-6" aria-hidden />}
+            title="Aucune catégorie"
+            description="Créez votre première catégorie ou générez votre carte automatiquement à partir d'un PDF."
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {categories.map((category: Category) => (
               <div
                 key={category.id}
-                className="border border-gray-200 rounded-md p-4"
+                className="border border-line rounded-xl p-4 bg-cream/50"
               >
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex justify-between items-center mb-3 gap-2">
                   {editingCategoryId === category.id ? (
-                    <div className="flex items-center gap-2 w-full">
-                      <input
+                    <div className="flex items-center gap-1.5 w-full">
+                      <Input
                         type="text"
                         value={editingCategoryName}
                         onChange={(e) => setEditingCategoryName(e.target.value)}
-                        className="border border-gray-300 rounded px-2 py-1 text-sm text-black w-full"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveCategoryEdit(category.id);
+                          if (e.key === "Escape") cancelEditingCategory();
+                        }}
+                        className="h-9 text-sm"
+                        autoFocus
                       />
-                      <button
+                      <IconButton
+                        label="Enregistrer"
+                        tone="primary"
                         onClick={() => saveCategoryEdit(category.id)}
-                        className="text-green-600 hover:text-green-800 text-sm"
                       >
-                        ✓
-                      </button>
-                      <button
-                        onClick={cancelEditingCategory}
-                        className="text-gray-600 hover:text-gray-800 text-sm"
-                      >
-                        ✕
-                      </button>
+                        <Check className="h-4 w-4" />
+                      </IconButton>
+                      <IconButton label="Annuler" onClick={cancelEditingCategory}>
+                        <X className="h-4 w-4" />
+                      </IconButton>
                     </div>
                   ) : (
                     <>
-                      <h3 className="font-bold text-gray-800">
+                      <h3 className="font-display font-bold text-ink truncate">
                         {category.name}
                       </h3>
-                      <div className="flex gap-2">
-                        <button
+                      <div className="flex gap-1 shrink-0">
+                        <IconButton
+                          label={`Modifier ${category.name}`}
+                          tone="primary"
                           onClick={() => startEditingCategory(category)}
-                          className="text-blue-600 hover:text-blue-800 text-sm"
                         >
-                          Modifier
-                        </button>
-                        <button
+                          <Pencil className="h-4 w-4" />
+                        </IconButton>
+                        <IconButton
+                          label={`Supprimer ${category.name}`}
+                          tone="danger"
                           onClick={() => deleteCategory(category.id)}
-                          className="text-red-600 hover:text-red-800 text-sm"
                         >
-                          Supprimer
-                        </button>
+                          <Trash2 className="h-4 w-4" />
+                        </IconButton>
                       </div>
                     </>
                   )}
                 </div>
 
-                <div className="ml-4">
-                  <h4 className="text-sm font-medium text-gray-600 mb-2">
-                    Sous-catégories:
+                <div>
+                  <h4 className="text-xs font-bold text-ink-soft uppercase tracking-wider mb-2">
+                    Sous-catégories
                   </h4>
-                  <ul className="list-disc list-inside mb-2 text-gray-700">
+                  <ul className="space-y-1 mb-3">
                     {subCategories
                       .filter((sub: any) => sub.categoryId === category.id)
                       .map((sub: any) => (
                         <li
                           key={sub.id}
-                          className="flex justify-between items-center w-full"
+                          className="flex justify-between items-center gap-2 rounded-lg bg-surface border border-line px-3 py-1.5"
                         >
-                          <span>{sub.name}</span>
-                          <button
+                          <span className="text-sm text-ink truncate">
+                            {sub.name}
+                          </span>
+                          <IconButton
+                            label={`Supprimer ${sub.name}`}
+                            tone="danger"
+                            className="h-7 w-7"
                             onClick={() => deleteSubCategory(sub.id)}
-                            className="text-red-500 hover:text-red-700 text-xs"
                           >
-                            ×
-                          </button>
+                            <X className="h-3.5 w-3.5" />
+                          </IconButton>
                         </li>
                       ))}
                   </ul>
-                  <div className="flex gap-2">
-                    <input
+                  <div className="flex gap-1.5">
+                    <Input
                       type="text"
                       placeholder="Ajouter sous-catégorie"
-                      className="border border-gray-300 rounded-md px-2 py-1 text-sm text-black"
+                      className="h-9 text-sm"
                       value={
                         selectedCategoryForSub === category.id
                           ? newSubCategoryName
@@ -424,18 +559,21 @@ function CategoriesManager({
                         }
                       }}
                     />
-                    <button
+                    <IconButton
+                      label="Ajouter la sous-catégorie"
+                      tone="primary"
                       onClick={() => handleAddSubCategory(category.id)}
-                      className="text-sm bg-gray-200 px-2 rounded hover:bg-gray-300 text-black"
+                      className="border border-line bg-surface"
                     >
-                      +
-                    </button>
+                      <Plus className="h-4 w-4" />
+                    </IconButton>
                   </div>
                 </div>
               </div>
             ))}
-        </div>
-      </div>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
@@ -503,41 +641,45 @@ function ProductsManager({
   );
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-lg font-medium mb-4 text-gray-900">
-        Gestion des Produits
-      </h2>
+    <Card className="p-6">
+      <CardHeader
+        title="Gestion des produits"
+        description="Ajoutez vos produits, ajustez les prix et activez ou désactivez-les."
+      />
 
-      <div className="mb-6">
-        <input
-          type="text"
+      <div className="mb-6 relative w-full md:w-80">
+        <Search
+          className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-soft pointer-events-none"
+          aria-hidden
+        />
+        <Input
+          type="search"
           placeholder="Rechercher par nom..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="border border-gray-300 rounded-md px-3 py-2 text-black w-full md:w-1/3"
+          className="pl-9"
+          aria-label="Rechercher un produit"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 bg-gray-50 p-4 rounded-md">
-        <input
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6 bg-cream/70 border border-line p-4 rounded-xl">
+        <Input
           type="text"
           placeholder="Désignation"
           value={newProduct.designation || ""}
           onChange={(e) =>
             setNewProduct({ ...newProduct, designation: e.target.value })
           }
-          className="border border-gray-300 rounded-md px-3 py-2 text-black"
         />
-        <input
+        <Input
           type="number"
-          placeholder="Prix"
+          placeholder="Prix (€)"
           value={newProduct.price || ""}
           onChange={(e) =>
             setNewProduct({ ...newProduct, price: Number(e.target.value) })
           }
-          className="border border-gray-300 rounded-md px-3 py-2 text-black"
         />
-        <select
+        <Select
           value={newProduct.categoryId || ""}
           onChange={(e) =>
             setNewProduct({
@@ -546,7 +688,6 @@ function ProductsManager({
               subCategoryId: undefined,
             })
           }
-          className="border border-gray-300 rounded-md px-3 py-2 text-black"
         >
           <option value="">Catégorie</option>
           {categories.map((c: Category) => (
@@ -554,13 +695,12 @@ function ProductsManager({
               {c.name}
             </option>
           ))}
-        </select>
-        <select
+        </Select>
+        <Select
           value={newProduct.subCategoryId || ""}
           onChange={(e) =>
             setNewProduct({ ...newProduct, subCategoryId: e.target.value })
           }
-          className="border border-gray-300 rounded-md px-3 py-2 text-black"
           disabled={!newProduct.categoryId}
         >
           <option value="">Sous-catégorie</option>
@@ -571,211 +711,222 @@ function ProductsManager({
                 {sub.name}
               </option>
             ))}
-        </select>
-        <button
-          onClick={handleAddProduct}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-        >
+        </Select>
+        <Button onClick={handleAddProduct}>
+          <Plus className="h-4 w-4" aria-hidden />
           Ajouter
-        </button>
+        </Button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Désignation
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Prix
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actif
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Catégorie
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Sous-catégorie
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredProducts.map((product: Product) => {
-              const isEditing = editingProductId === product.id;
-              const category = categories.find(
-                (c: Category) => c.id === product.categoryId
-              );
-              const subCategory = subCategories.find(
-                (s: any) => s.id === product.subCategoryId
-              );
+      {filteredProducts.length === 0 ? (
+        <EmptyState
+          icon={<PackageOpen className="h-6 w-6" aria-hidden />}
+          title={searchQuery ? "Aucun résultat" : "Aucun produit"}
+          description={
+            searchQuery
+              ? "Aucun produit ne correspond à votre recherche."
+              : "Ajoutez votre premier produit à l'aide du formulaire ci-dessus."
+          }
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-line">
+          <table className="min-w-full divide-y divide-line">
+            <thead className="bg-parchment/60">
+              <tr>
+                <Th>Désignation</Th>
+                <Th>Prix</Th>
+                <Th>Actif</Th>
+                <Th>Catégorie</Th>
+                <Th>Sous-catégorie</Th>
+                <Th className="text-right">Actions</Th>
+              </tr>
+            </thead>
+            <tbody className="bg-surface divide-y divide-line">
+              {filteredProducts.map((product: Product) => {
+                const isEditing = editingProductId === product.id;
+                const category = categories.find(
+                  (c: Category) => c.id === product.categoryId
+                );
+                const subCategory = subCategories.find(
+                  (s: any) => s.id === product.subCategoryId
+                );
 
-              if (isEditing) {
-                return (
-                  <tr key={product.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      <input
-                        type="text"
-                        value={editFormData.designation || ""}
-                        onChange={(e) =>
-                          setEditFormData({
-                            ...editFormData,
-                            designation: e.target.value,
-                          })
-                        }
-                        className="border border-gray-300 rounded px-2 py-1 w-full text-black"
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <input
-                        type="number"
-                        value={editFormData.price || ""}
-                        onChange={(e) =>
-                          setEditFormData({
-                            ...editFormData,
-                            price: Number(e.target.value),
-                          })
-                        }
-                        className="border border-gray-300 rounded px-2 py-1 w-24 text-black"
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <input
-                        type="checkbox"
-                        checked={editFormData.isActive ?? true}
-                        onChange={(e) =>
-                          setEditFormData({
-                            ...editFormData,
-                            isActive: e.target.checked,
-                          })
-                        }
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <select
-                        value={editFormData.categoryId || ""}
-                        onChange={(e) =>
-                          setEditFormData({
-                            ...editFormData,
-                            categoryId: e.target.value,
-                            subCategoryId: undefined,
-                          })
-                        }
-                        className="border border-gray-300 rounded-md px-2 py-1 text-black w-full"
-                      >
-                        {categories.map((c: Category) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <select
-                        value={editFormData.subCategoryId || ""}
-                        onChange={(e) =>
-                          setEditFormData({
-                            ...editFormData,
-                            subCategoryId: e.target.value,
-                          })
-                        }
-                        className="border border-gray-300 rounded-md px-2 py-1 text-black w-full"
-                      >
-                        <option value="">Aucune</option>
-                        {subCategories
-                          .filter(
-                            (sub: any) =>
-                              sub.categoryId === editFormData.categoryId
-                          )
-                          .map((sub: any) => (
-                            <option key={sub.id} value={sub.id}>
-                              {sub.name}
+                if (isEditing) {
+                  return (
+                    <tr key={product.id} className="bg-gold-soft/30">
+                      <Td>
+                        <Input
+                          type="text"
+                          value={editFormData.designation || ""}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              designation: e.target.value,
+                            })
+                          }
+                          className="h-9 text-sm min-w-40"
+                        />
+                      </Td>
+                      <Td>
+                        <Input
+                          type="number"
+                          value={editFormData.price || ""}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              price: Number(e.target.value),
+                            })
+                          }
+                          className="h-9 text-sm w-24"
+                        />
+                      </Td>
+                      <Td>
+                        <input
+                          type="checkbox"
+                          checked={editFormData.isActive ?? true}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              isActive: e.target.checked,
+                            })
+                          }
+                          className="h-4 w-4 accent-olive cursor-pointer"
+                          aria-label="Produit actif"
+                        />
+                      </Td>
+                      <Td>
+                        <Select
+                          value={editFormData.categoryId || ""}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              categoryId: e.target.value,
+                              subCategoryId: undefined,
+                            })
+                          }
+                          className="h-9 text-sm min-w-32"
+                        >
+                          {categories.map((c: Category) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
                             </option>
                           ))}
-                      </select>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        </Select>
+                      </Td>
+                      <Td>
+                        <Select
+                          value={editFormData.subCategoryId || ""}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              subCategoryId: e.target.value,
+                            })
+                          }
+                          className="h-9 text-sm min-w-32"
+                        >
+                          <option value="">Aucune</option>
+                          {subCategories
+                            .filter(
+                              (sub: any) =>
+                                sub.categoryId === editFormData.categoryId
+                            )
+                            .map((sub: any) => (
+                              <option key={sub.id} value={sub.id}>
+                                {sub.name}
+                              </option>
+                            ))}
+                        </Select>
+                      </Td>
+                      <Td className="text-right whitespace-nowrap">
+                        <div className="inline-flex gap-1">
+                          <IconButton
+                            label="Enregistrer"
+                            tone="primary"
+                            onClick={() => saveEdit(product.id)}
+                          >
+                            <Check className="h-4 w-4" />
+                          </IconButton>
+                          <IconButton label="Annuler" onClick={cancelEditing}>
+                            <X className="h-4 w-4" />
+                          </IconButton>
+                        </div>
+                      </Td>
+                    </tr>
+                  );
+                }
+
+                return (
+                  <tr
+                    key={product.id}
+                    className="hover:bg-cream/60 transition-colors"
+                  >
+                    <Td className="font-semibold whitespace-nowrap">
+                      {product.designation}
+                    </Td>
+                    <Td className="whitespace-nowrap tabular-nums">
+                      {product.price.toFixed(2)} €
+                    </Td>
+                    <Td>
                       <button
-                        onClick={() => saveEdit(product.id)}
-                        className="text-green-600 hover:text-green-900"
+                        onClick={() =>
+                          updateProduct({
+                            ...product,
+                            isActive: !product.isActive,
+                          })
+                        }
+                        role="switch"
+                        aria-checked={product.isActive !== false}
+                        aria-label={`${product.designation} ${
+                          product.isActive !== false ? "actif" : "inactif"
+                        }`}
+                        className={cn(
+                          "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out",
+                          product.isActive !== false ? "bg-olive" : "bg-line"
+                        )}
                       >
-                        Enregistrer
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out",
+                            product.isActive !== false
+                              ? "translate-x-5"
+                              : "translate-x-0"
+                          )}
+                        />
                       </button>
-                      <button
-                        onClick={cancelEditing}
-                        className="text-gray-600 hover:text-gray-900"
-                      >
-                        Annuler
-                      </button>
-                    </td>
+                    </Td>
+                    <Td className="text-ink-soft whitespace-nowrap">
+                      {category?.name || "-"}
+                    </Td>
+                    <Td className="text-ink-soft whitespace-nowrap">
+                      {subCategory?.name || "-"}
+                    </Td>
+                    <Td className="text-right whitespace-nowrap">
+                      <div className="inline-flex gap-1">
+                        <IconButton
+                          label={`Modifier ${product.designation}`}
+                          tone="primary"
+                          onClick={() => startEditing(product)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </IconButton>
+                        <IconButton
+                          label={`Supprimer ${product.designation}`}
+                          tone="danger"
+                          onClick={() => deleteProduct(product.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </IconButton>
+                      </div>
+                    </Td>
                   </tr>
                 );
-              }
-
-              return (
-                <tr key={product.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {product.designation}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {product.price} €
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <button
-                      onClick={() =>
-                        updateProduct({
-                          ...product,
-                          isActive: !product.isActive,
-                        })
-                      }
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                        product.isActive !== false
-                          ? "bg-indigo-600"
-                          : "bg-gray-200"
-                      }`}
-                    >
-                      <span
-                        aria-hidden="true"
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                          product.isActive !== false
-                            ? "translate-x-5"
-                            : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {category?.name || "-"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {subCategory?.name || "-"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => startEditing(product)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-4"
-                    >
-                      Modifier
-                    </button>
-                    <button
-                      onClick={() => deleteProduct(product.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Supprimer
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -834,115 +985,106 @@ function OrdersManager() {
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
+    <Card className="p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h2 className="text-lg font-medium text-gray-900">
-          Gestion des Commandes
+        <h2 className="font-display text-xl font-bold text-ink">
+          Gestion des commandes
         </h2>
 
-        <div className="flex space-x-4">
-          <button
-            onClick={() => setActiveTab("upcoming")}
-            className={`px-4 py-2 rounded-md text-sm font-medium ${
-              activeTab === "upcoming"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            À venir
-          </button>
-          <button
-            onClick={() => setActiveTab("past")}
-            className={`px-4 py-2 rounded-md text-sm font-medium ${
-              activeTab === "past"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            Passées
-          </button>
-        </div>
+        <Segmented
+          options={[
+            { value: "upcoming", label: "À venir" },
+            { value: "past", label: "Passées" },
+          ]}
+          value={activeTab}
+          onChange={setActiveTab}
+        />
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto mb-6">
-        {/* Date Filter */}
-        <input
+      <div className="flex flex-col md:flex-row gap-3 w-full mb-6">
+        <Input
           type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
-          className="border border-gray-300 rounded-md px-3 py-2 text-black text-sm"
+          className="md:w-48"
+          aria-label="Filtrer par date"
         />
 
-        {/* Name Search */}
-        <input
-          type="text"
-          placeholder="Rechercher un client..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="border border-gray-300 rounded-md px-3 py-2 text-black text-sm"
-        />
-        <button
-          onClick={handleSearch}
-          className="px-3 py-2 rounded-md text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap"
-        >
+        <div className="relative md:w-72">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-soft pointer-events-none"
+            aria-hidden
+          />
+          <Input
+            type="search"
+            placeholder="Rechercher un client..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSearch();
+            }}
+            className="pl-9"
+            aria-label="Rechercher un client"
+          />
+        </div>
+        <Button onClick={handleSearch} variant="secondary">
           Rechercher
-        </button>
+        </Button>
       </div>
 
       {loading ? (
-        <div className="text-center py-8">Chargement des commandes...</div>
+        <LoadingBlock label="Chargement des commandes..." />
       ) : (
         <>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Client
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date de retrait
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Produits
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {orders.length === 0 ? (
+          {orders.length === 0 ? (
+            <EmptyState
+              icon={<ClipboardList className="h-6 w-6" aria-hidden />}
+              title="Aucune commande trouvée"
+              description={
+                activeTab === "upcoming"
+                  ? "Les commandes à venir apparaîtront ici."
+                  : "Les commandes passées apparaîtront ici."
+              }
+            />
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-line">
+              <table className="min-w-full divide-y divide-line">
+                <thead className="bg-parchment/60">
                   <tr>
-                    <td
-                      colSpan={5}
-                      className="px-6 py-4 text-center text-gray-500"
-                    >
-                      Aucune commande trouvée.
-                    </td>
+                    <Th>Client</Th>
+                    <Th>Date de retrait</Th>
+                    <Th>Produits</Th>
+                    <Th>Total</Th>
+                    <Th className="text-right">Actions</Th>
                   </tr>
-                ) : (
-                  orders.map((order) => (
-                    <tr key={order.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                </thead>
+                <tbody className="bg-surface divide-y divide-line">
+                  {orders.map((order) => (
+                    <tr
+                      key={order.id}
+                      className="hover:bg-cream/60 transition-colors"
+                    >
+                      <Td className="font-semibold whitespace-nowrap">
                         {order.clientName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(order.pickupDate).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        <ul className="list-disc list-inside">
+                      </Td>
+                      <Td className="whitespace-nowrap">
+                        <Badge tone="gold">
+                          {new Date(order.pickupDate).toLocaleDateString()}
+                        </Badge>
+                      </Td>
+                      <Td>
+                        <ul className="space-y-0.5 text-ink-soft">
                           {order.items.map((item, idx) => (
                             <li key={idx}>
-                              {item.quantity}x {item.product.designation}
+                              <span className="font-semibold text-ink tabular-nums">
+                                {item.quantity}×
+                              </span>{" "}
+                              {item.product.designation}
                             </li>
                           ))}
                         </ul>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      </Td>
+                      <Td className="font-bold whitespace-nowrap tabular-nums">
                         {order.items
                           .reduce(
                             (acc, item) =>
@@ -951,64 +1093,74 @@ function OrdersManager() {
                           )
                           .toFixed(2)}{" "}
                         €
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() =>
-                            router.push(`/user?orderId=${order.id}`)
-                          }
-                          className="text-indigo-600 hover:text-indigo-900 mr-4"
-                        >
-                          Modifier
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (
-                              confirm("Voulez-vous supprimer cette commande ?")
-                            ) {
-                              fetch(`/api/orders/${order.id}`, {
-                                method: "DELETE",
-                              }).then(() => fetchOrders(page, searchQuery));
+                      </Td>
+                      <Td className="text-right whitespace-nowrap">
+                        <div className="inline-flex gap-1">
+                          <IconButton
+                            label={`Modifier la commande de ${order.clientName}`}
+                            tone="primary"
+                            onClick={() =>
+                              router.push(`/user?orderId=${order.id}`)
                             }
-                          }}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Supprimer
-                        </button>
-                      </td>
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </IconButton>
+                          <IconButton
+                            label={`Supprimer la commande de ${order.clientName}`}
+                            tone="danger"
+                            onClick={() => {
+                              if (
+                                confirm(
+                                  "Voulez-vous supprimer cette commande ?"
+                                )
+                              ) {
+                                fetch(`/api/orders/${order.id}`, {
+                                  method: "DELETE",
+                                }).then(() => fetchOrders(page, searchQuery));
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </IconButton>
+                        </div>
+                      </Td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-4 mt-6">
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => handlePageChange(page - 1)}
                 disabled={page === 1}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400"
               >
+                <ChevronLeft className="h-4 w-4" aria-hidden />
                 Précédent
-              </button>
-              <span className="text-sm text-gray-700">
-                Page <span className="font-medium">{page}</span> sur{" "}
-                <span className="font-medium">{totalPages}</span>
+              </Button>
+              <span className="text-sm text-ink-soft">
+                Page <span className="font-bold text-ink">{page}</span> sur{" "}
+                <span className="font-bold text-ink">{totalPages}</span>
               </span>
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400"
               >
                 Suivant
-              </button>
+                <ChevronRight className="h-4 w-4" aria-hidden />
+              </Button>
             </div>
           )}
         </>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -1126,7 +1278,7 @@ function ProductionManager({
     (mode === "range" && startDate && endDate);
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
+    <Card className="p-6">
       <style jsx global>{`
         @media print {
           body * {
@@ -1149,111 +1301,90 @@ function ProductionManager({
           }
         }
       `}</style>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-medium text-gray-900">Production</h2>
-        {hasData && (
-          <button
-            onClick={handlePrint}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-5 h-5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z"
-              />
-            </svg>
-            Imprimer
-          </button>
-        )}
-      </div>
+      <CardHeader
+        title="Production"
+        description="Quantités totales à produire pour une date ou une période."
+        action={
+          hasData ? (
+            <Button onClick={handlePrint} variant="secondary">
+              <Printer className="h-4 w-4" aria-hidden />
+              Imprimer
+            </Button>
+          ) : undefined
+        }
+      />
 
       <div className="mb-6 space-y-4">
-        <div className="flex items-center space-x-4">
-          <label className="inline-flex items-center">
-            <input
-              type="radio"
-              className="form-radio text-blue-600"
-              name="mode"
-              value="single"
-              checked={mode === "single"}
-              onChange={() => setMode("single")}
-            />
-            <span className="ml-2 text-gray-700">Par jour</span>
-          </label>
-          <label className="inline-flex items-center">
-            <input
-              type="radio"
-              className="form-radio text-blue-600"
-              name="mode"
-              value="range"
-              checked={mode === "range"}
-              onChange={() => setMode("range")}
-            />
-            <span className="ml-2 text-gray-700">Par période</span>
-          </label>
-        </div>
+        <Segmented
+          options={[
+            { value: "single", label: "Par jour" },
+            { value: "range", label: "Par période" },
+          ]}
+          value={mode}
+          onChange={setMode}
+        />
 
         {mode === "single" ? (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Sélectionner une date
-            </label>
-            <input
+            <Label htmlFor="production-date">Sélectionner une date</Label>
+            <Input
+              id="production-date"
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full md:w-64 border border-gray-300 rounded-md px-3 py-2 text-black"
+              className="md:w-64"
             />
           </div>
         ) : (
           <div className="flex flex-col md:flex-row gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date de début
-              </label>
-              <input
+              <Label htmlFor="production-start">Date de début</Label>
+              <Input
+                id="production-start"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full md:w-64 border border-gray-300 rounded-md px-3 py-2 text-black"
+                className="md:w-64"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date de fin
-              </label>
-              <input
+              <Label htmlFor="production-end">Date de fin</Label>
+              <Input
+                id="production-end"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full md:w-64 border border-gray-300 rounded-md px-3 py-2 text-black"
+                className="md:w-64"
               />
             </div>
           </div>
         )}
       </div>
 
+      {!showContent && (
+        <EmptyState
+          icon={<ChefHat className="h-6 w-6" aria-hidden />}
+          title="Choisissez une date"
+          description="Sélectionnez un jour ou une période pour afficher la liste de production."
+        />
+      )}
+
       {showContent && (
         <>
           {hasData && (
-            <div className="mb-4 p-4 bg-gray-50 rounded-md border border-gray-200 no-print">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">
+            <div className="mb-4 p-4 bg-cream/70 rounded-xl border border-line no-print">
+              <h4 className="text-xs font-bold text-ink-soft uppercase tracking-wider mb-2.5">
                 Filtrer les catégories
               </h4>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-x-5 gap-y-2">
                 {sortedCategories.map((category) => (
-                  <label key={category} className="inline-flex items-center">
+                  <label
+                    key={category}
+                    className="inline-flex items-center cursor-pointer"
+                  >
                     <input
                       type="checkbox"
-                      className="form-checkbox text-blue-600 rounded"
+                      className="h-4 w-4 accent-olive cursor-pointer"
                       checked={!hiddenCategories.includes(category)}
                       onChange={(e) => {
                         if (e.target.checked) {
@@ -1265,9 +1396,7 @@ function ProductionManager({
                         }
                       }}
                     />
-                    <span className="ml-2 text-sm text-gray-700">
-                      {category}
-                    </span>
+                    <span className="ml-2 text-sm text-ink">{category}</span>
                   </label>
                 ))}
               </div>
@@ -1275,7 +1404,7 @@ function ProductionManager({
           )}
 
           <div id="printable-production">
-            <h3 className="text-md font-bold text-gray-800 mb-4">
+            <h3 className="font-display text-lg font-bold text-ink mb-4">
               Total à produire{" "}
               {mode === "single"
                 ? `pour le ${new Date(selectedDate).toLocaleDateString()}`
@@ -1285,44 +1414,44 @@ function ProductionManager({
             </h3>
 
             {loading ? (
-              <div>Chargement...</div>
+              <LoadingBlock />
             ) : !hasData ? (
-              <div className="text-gray-500">
-                Aucune commande pour cette sélection.
-              </div>
+              <EmptyState
+                icon={<ClipboardList className="h-6 w-6" aria-hidden />}
+                title="Aucune commande pour cette sélection"
+              />
             ) : (
-              <div className="overflow-x-auto border border-gray-200 rounded-md">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+              <div className="overflow-x-auto border border-line rounded-xl">
+                <table className="min-w-full divide-y divide-line">
+                  <thead className="bg-parchment/60">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Produit
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Quantité Totale
-                      </th>
+                      <Th>Produit</Th>
+                      <Th>Quantité totale</Th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-surface divide-y divide-line">
                     {sortedCategories
                       .filter((c) => !hiddenCategories.includes(c))
                       .map((categoryName) => [
-                        <tr key={`cat-${categoryName}`} className="bg-gray-100">
+                        <tr
+                          key={`cat-${categoryName}`}
+                          className="bg-gold-soft/50"
+                        >
                           <td
                             colSpan={2}
-                            className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 uppercase"
+                            className="px-4 py-2.5 whitespace-nowrap text-sm font-bold text-primary uppercase tracking-wide"
                           >
                             {categoryName}
                           </td>
                         </tr>,
                         ...productsByCategory[categoryName].map((item) => (
                           <tr key={item.name}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 pl-10">
+                            <Td className="font-medium whitespace-nowrap pl-8">
                               {item.name}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
+                            </Td>
+                            <Td className="font-bold whitespace-nowrap tabular-nums">
                               {item.quantity}
-                            </td>
+                            </Td>
                           </tr>
                         )),
                       ])}
@@ -1333,7 +1462,7 @@ function ProductionManager({
           </div>
         </>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -1416,114 +1545,120 @@ function MembersManager() {
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-lg font-medium text-gray-900 mb-4">
-        Gestion des Membres
-      </h2>
+    <Card className="p-6">
+      <CardHeader
+        title="Gestion des membres"
+        description="Invitez jusqu'à 4 membres dans votre organisation."
+        action={<Badge tone="gold">{members.length} / 4 membres</Badge>}
+      />
 
       <div className="mb-6">
-        <form onSubmit={handleInvite} className="flex gap-4 items-end">
+        <form
+          onSubmit={handleInvite}
+          className="flex flex-col sm:flex-row gap-3 sm:items-end"
+        >
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Inviter un membre (Email)
-            </label>
-            <input
+            <Label htmlFor="invite-email">Inviter un membre (email)</Label>
+            <Input
+              id="invite-email"
               type="email"
               required
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
               placeholder="email@exemple.com"
             />
           </div>
-          <div className="w-40">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Rôle
-            </label>
-            <select
+          <div className="sm:w-40">
+            <Label htmlFor="invite-role">Rôle</Label>
+            <Select
+              id="invite-role"
               value={inviteRole}
               onChange={(e) =>
                 setInviteRole(e.target.value as "org:member" | "org:admin")
               }
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
             >
               <option value="org:member">Membre</option>
               <option value="org:admin">Admin</option>
-            </select>
+            </Select>
           </div>
-          <button
-            type="submit"
-            disabled={members.length >= 4}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-          >
+          <Button type="submit" disabled={members.length >= 4}>
             Inviter
-          </button>
+          </Button>
         </form>
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-        {success && <p className="text-green-500 text-sm mt-2">{success}</p>}
-        <p className="text-sm text-gray-500 mt-2">
-          Membres actuels : {members.length} / 4
-        </p>
+        {error && (
+          <p role="alert" className="text-danger text-sm mt-2">
+            {error}
+          </p>
+        )}
+        {success && (
+          <p role="status" className="text-olive-dark text-sm mt-2">
+            {success}
+          </p>
+        )}
       </div>
 
-      <div className="overflow-x-auto border border-gray-200 rounded-md">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Utilisateur
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Rôle
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {members.map((member) => (
-              <tr key={member.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    {member.imageUrl && (
-                      <Image
-                        src={member.imageUrl}
-                        alt=""
-                        width={32}
-                        height={32}
-                        className="h-8 w-8 rounded-full mr-3"
-                      />
-                    )}
-                    <div className="text-sm font-medium text-gray-900">
-                      {member.firstName} {member.lastName}
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {member.email}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {member.role === "org:member" ? "Membre" : "Admin"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  {member.role !== "org:admin" && (
-                    <button
-                      onClick={() => handleRemove(member.userId)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Supprimer
-                    </button>
-                  )}
-                </td>
+      {loading ? (
+        <LoadingBlock label="Chargement des membres..." />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-line">
+          <table className="min-w-full divide-y divide-line">
+            <thead className="bg-parchment/60">
+              <tr>
+                <Th>Utilisateur</Th>
+                <Th>Email</Th>
+                <Th>Rôle</Th>
+                <Th className="text-right">Actions</Th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+            </thead>
+            <tbody className="bg-surface divide-y divide-line">
+              {members.map((member) => (
+                <tr
+                  key={member.id}
+                  className="hover:bg-cream/60 transition-colors"
+                >
+                  <Td className="whitespace-nowrap">
+                    <div className="flex items-center">
+                      {member.imageUrl && (
+                        <Image
+                          src={member.imageUrl}
+                          alt=""
+                          width={32}
+                          height={32}
+                          className="h-8 w-8 rounded-full mr-3"
+                        />
+                      )}
+                      <span className="font-semibold">
+                        {member.firstName} {member.lastName}
+                      </span>
+                    </div>
+                  </Td>
+                  <Td className="text-ink-soft whitespace-nowrap">
+                    {member.email}
+                  </Td>
+                  <Td className="whitespace-nowrap">
+                    <Badge
+                      tone={member.role === "org:admin" ? "gold" : "neutral"}
+                    >
+                      {member.role === "org:member" ? "Membre" : "Admin"}
+                    </Badge>
+                  </Td>
+                  <Td className="text-right whitespace-nowrap">
+                    {member.role !== "org:admin" && (
+                      <IconButton
+                        label={`Supprimer ${member.firstName} ${member.lastName}`}
+                        tone="danger"
+                        onClick={() => handleRemove(member.userId)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </IconButton>
+                    )}
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
   );
 }

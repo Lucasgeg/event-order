@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* Typographie */
+  --font-sans: var(--font-karla), system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-playfair), Georgia, serif;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Palette "artisan" dérivée du logo (doré, brun, olive) */
+  --color-cream: #faf6ef;
+  --color-parchment: #f3ecdd;
+  --color-surface: #ffffff;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --color-ink: #2b211a;
+  --color-ink-soft: #6b5d52;
+
+  --color-primary: #7a4a32;
+  --color-primary-dark: #5e3823;
+
+  --color-gold: #c6952f;
+  --color-gold-dark: #96701c;
+  --color-gold-soft: #f5ead1;
+
+  --color-olive: #5f7036;
+  --color-olive-dark: #4a582a;
+  --color-olive-soft: #eef1e3;
+
+  --color-danger: #b42318;
+  --color-danger-dark: #8e1b10;
+  --color-danger-soft: #fdebe8;
+
+  --color-line: #e8dfd2;
+
+  /* Animations */
+  --animate-fade-in: fade-in 0.4s ease-out both;
+  --animate-fade-up: fade-up 0.5s ease-out both;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: var(--color-gold-soft);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

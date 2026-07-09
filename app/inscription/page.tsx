@@ -4,6 +4,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Button, Input, Label } from "../components/ui";
 
 export default function RegistrationPage() {
   const [formData, setFormData] = useState({
@@ -62,20 +64,23 @@ export default function RegistrationPage() {
 
   if (success) {
     return (
-      <div className="flex min-h-screen flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 text-center">
-            <h2 className="text-2xl font-bold text-green-600 mb-4">
+      <div className="flex min-h-screen flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-cream">
+        <div className="w-full max-w-md">
+          <div className="bg-surface rounded-2xl border border-line shadow-sm py-10 px-8 text-center">
+            <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-olive-soft text-olive-dark mb-5">
+              <CheckCircle2 className="h-7 w-7" aria-hidden />
+            </div>
+            <h2 className="font-display text-2xl font-bold text-ink mb-3">
               Inscription réussie !
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-ink-soft mb-8">
               Votre organisation a été créée avec succès. Des emails contenant
               les informations de connexion ont été envoyés à
               l&apos;administrateur et au membre.
             </p>
             <Link
               href="/login"
-              className="inline-flex justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              className="inline-flex items-center justify-center h-11 px-5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-colors"
             >
               Retour à la connexion
             </Link>
@@ -86,243 +91,183 @@ export default function RegistrationPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          {/* Placeholder for logo if needed, consistent with login page */}
-          <Image
-            src="/logo.png"
-            alt="Logo"
-            width={48}
-            height={48}
-            className="h-12 w-auto"
-          />
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            Créer un compte
-          </h2>
+    <div className="flex min-h-screen flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-cream">
+      <div className="w-full max-w-lg">
+        <div className="mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-soft hover:text-ink transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            Retour à l&apos;accueil
+          </Link>
         </div>
-      </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-[480px]">
-        <div className="bg-white px-4 py-8 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-surface rounded-2xl border border-line shadow-sm px-6 py-8 sm:px-10">
+          <div className="flex flex-col items-center mb-8">
+            <Image
+              src="/logo.png"
+              alt="Cahier du Chef Logo"
+              width={56}
+              height={56}
+              className="h-14 w-14"
+            />
+            <h1 className="mt-4 text-center font-display text-3xl font-bold tracking-tight text-ink">
+              Créer un compte
+            </h1>
+            <p className="mt-2 text-center text-sm text-ink-soft">
+              Créez votre organisation et invitez votre premier membre.
+            </p>
+          </div>
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             {/* Organisation */}
             <div>
-              <label
-                htmlFor="organisationName"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
+              <Label htmlFor="organisationName">
                 Nom de l&apos;organisation
-              </label>
-              <div className="mt-2">
-                <input
-                  id="organisationName"
-                  name="organisationName"
-                  type="text"
-                  required
-                  value={formData.organisationName}
-                  onChange={handleChange}
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                />
-              </div>
+              </Label>
+              <Input
+                id="organisationName"
+                name="organisationName"
+                type="text"
+                required
+                placeholder="Ex. Boulangerie Martin"
+                value={formData.organisationName}
+                onChange={handleChange}
+              />
             </div>
 
-            <div className="border-t border-gray-200 pt-4">
-              <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
+            <fieldset className="border-t border-line pt-5">
+              <legend className="font-display text-lg font-bold text-ink pr-3">
                 Administrateur
-              </h3>
-              <div className="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-6">
-                <div className="sm:col-span-3">
-                  <label
-                    htmlFor="adminFirstName"
-                    className="block text-sm font-medium leading-6 text-gray-900"
-                  >
-                    Prénom
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      type="text"
-                      name="adminFirstName"
-                      id="adminFirstName"
-                      required
-                      value={formData.adminFirstName}
-                      onChange={handleChange}
-                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                    />
-                  </div>
+              </legend>
+              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="adminFirstName">Prénom</Label>
+                  <Input
+                    type="text"
+                    name="adminFirstName"
+                    id="adminFirstName"
+                    required
+                    value={formData.adminFirstName}
+                    onChange={handleChange}
+                  />
                 </div>
 
-                <div className="sm:col-span-3">
-                  <label
-                    htmlFor="adminLastName"
-                    className="block text-sm font-medium leading-6 text-gray-900"
-                  >
-                    Nom
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      type="text"
-                      name="adminLastName"
-                      id="adminLastName"
-                      required
-                      value={formData.adminLastName}
-                      onChange={handleChange}
-                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="adminLastName">Nom</Label>
+                  <Input
+                    type="text"
+                    name="adminLastName"
+                    id="adminLastName"
+                    required
+                    value={formData.adminLastName}
+                    onChange={handleChange}
+                  />
                 </div>
 
-                <div className="sm:col-span-6">
-                  <label
-                    htmlFor="adminEmail"
-                    className="block text-sm font-medium leading-6 text-gray-900"
-                  >
-                    Email
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      id="adminEmail"
-                      name="adminEmail"
-                      type="email"
-                      autoComplete="email"
-                      required
-                      value={formData.adminEmail}
-                      onChange={handleChange}
-                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                    />
-                  </div>
+                <div className="sm:col-span-2">
+                  <Label htmlFor="adminEmail">Email</Label>
+                  <Input
+                    id="adminEmail"
+                    name="adminEmail"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={formData.adminEmail}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
-            </div>
+            </fieldset>
 
-            <div className="border-t border-gray-200 pt-4">
-              <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
+            <fieldset className="border-t border-line pt-5">
+              <legend className="font-display text-lg font-bold text-ink pr-3">
                 Membre
-              </h3>
-              <div className="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-6">
-                <div className="sm:col-span-3">
-                  <label
-                    htmlFor="memberFirstName"
-                    className="block text-sm font-medium leading-6 text-gray-900"
-                  >
-                    Prénom
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      type="text"
-                      name="memberFirstName"
-                      id="memberFirstName"
-                      required
-                      value={formData.memberFirstName}
-                      onChange={handleChange}
-                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                    />
-                  </div>
+              </legend>
+              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="memberFirstName">Prénom</Label>
+                  <Input
+                    type="text"
+                    name="memberFirstName"
+                    id="memberFirstName"
+                    required
+                    value={formData.memberFirstName}
+                    onChange={handleChange}
+                  />
                 </div>
 
-                <div className="sm:col-span-3">
-                  <label
-                    htmlFor="memberLastName"
-                    className="block text-sm font-medium leading-6 text-gray-900"
-                  >
-                    Nom
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      type="text"
-                      name="memberLastName"
-                      id="memberLastName"
-                      required
-                      value={formData.memberLastName}
-                      onChange={handleChange}
-                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="memberLastName">Nom</Label>
+                  <Input
+                    type="text"
+                    name="memberLastName"
+                    id="memberLastName"
+                    required
+                    value={formData.memberLastName}
+                    onChange={handleChange}
+                  />
                 </div>
 
-                <div className="sm:col-span-6">
-                  <label
-                    htmlFor="memberEmail"
-                    className="block text-sm font-medium leading-6 text-gray-900"
-                  >
-                    Email
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      id="memberEmail"
-                      name="memberEmail"
-                      type="email"
-                      required
-                      value={formData.memberEmail}
-                      onChange={handleChange}
-                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                    />
-                  </div>
+                <div className="sm:col-span-2">
+                  <Label htmlFor="memberEmail">Email</Label>
+                  <Input
+                    id="memberEmail"
+                    name="memberEmail"
+                    type="email"
+                    required
+                    value={formData.memberEmail}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
-            </div>
+            </fieldset>
 
             {/* Code Promo */}
-            <div className="border-t border-gray-200 pt-4">
-              <label
-                htmlFor="promoCode"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                Code Promo (optionnel)
-              </label>
-              <div className="mt-2">
-                <input
-                  id="promoCode"
-                  name="promoCode"
-                  type="text"
-                  value={formData.promoCode}
-                  onChange={handleChange}
-                  placeholder="Code promo"
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                />
-              </div>
+            <div className="border-t border-line pt-5">
+              <Label htmlFor="promoCode">Code promo (optionnel)</Label>
+              <Input
+                id="promoCode"
+                name="promoCode"
+                type="text"
+                value={formData.promoCode}
+                onChange={handleChange}
+                placeholder="Code promo"
+              />
             </div>
 
             {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <div className="flex">
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">Erreur</h3>
-                    <div className="mt-2 text-sm text-red-700">
-                      <p>{error}</p>
-                    </div>
-                  </div>
-                </div>
+              <div
+                role="alert"
+                className="rounded-lg bg-danger-soft border border-danger/20 px-4 py-3"
+              >
+                <h3 className="text-sm font-semibold text-danger">Erreur</h3>
+                <p className="mt-1 text-sm text-danger">{error}</p>
               </div>
             )}
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
-              >
-                {loading ? "Création en cours..." : "Créer l'organisation"}
-              </button>
-            </div>
+            <Button type="submit" loading={loading} className="w-full">
+              {loading ? "Création en cours..." : "Créer l'organisation"}
+            </Button>
           </form>
 
-          <div className="mt-6">
+          <div className="mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t border-line" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">
+                <span className="bg-surface px-3 text-ink-soft">
                   Déjà un compte ?
                 </span>
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-1 gap-3">
+            <div className="mt-6">
               <Link
                 href="/login"
-                className="flex w-full items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:ring-transparent"
+                className="flex w-full items-center justify-center h-11 rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink hover:bg-parchment transition-colors"
               >
                 Se connecter
               </Link>

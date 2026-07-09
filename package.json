@@ -42,8 +42,5 @@
   "trustedDependencies": [
     "sharp",
     "unrs-resolver"
-  ],
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  }
+  ]
 }

@@ -98,9 +98,14 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const { orgId } = await auth();
+
+    if (!orgId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { type, id, ...data } = body;
-    console.log("🚀 ~ PUT ~ body:", body);
 
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
@@ -110,14 +115,14 @@ export async function PUT(request: Request) {
 
     switch (type) {
       case "category":
-        result = await prisma.category.update({
-          where: { id },
+        result = await prisma.category.updateMany({
+          where: { id, tenantId: orgId },
           data: { name: data.name },
         });
         break;
       case "subCategory":
-        result = await prisma.subCategory.update({
-          where: { id },
+        result = await prisma.subCategory.updateMany({
+          where: { id, category: { tenantId: orgId } },
           data: {
             name: data.name,
             categoryId: data.categoryId,
@@ -125,8 +130,8 @@ export async function PUT(request: Request) {
         });
         break;
       case "product":
-        result = await prisma.product.update({
-          where: { id },
+        result = await prisma.product.updateMany({
+          where: { id, tenantId: orgId },
           data: {
             designation: data.designation,
             price: data.price ? parseFloat(data.price) : undefined,
@@ -140,7 +145,11 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: "Invalid type" }, { status: 400 });
     }
 
-    return NextResponse.json(result);
+    if (result.count === 0) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error updating item:", error);
     return NextResponse.json({ error: "Error updating item" }, { status: 500 });
@@ -149,6 +158,12 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const { orgId } = await auth();
+
+    if (!orgId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
     const id = searchParams.get("id");
@@ -164,19 +179,29 @@ export async function DELETE(request: Request) {
 
     switch (type) {
       case "category":
-        result = await prisma.category.delete({ where: { id } });
+        result = await prisma.category.deleteMany({
+          where: { id, tenantId: orgId },
+        });
         break;
       case "subCategory":
-        result = await prisma.subCategory.delete({ where: { id } });
+        result = await prisma.subCategory.deleteMany({
+          where: { id, category: { tenantId: orgId } },
+        });
         break;
       case "product":
-        result = await prisma.product.delete({ where: { id } });
+        result = await prisma.product.deleteMany({
+          where: { id, tenantId: orgId },
+        });
         break;
       default:
         return NextResponse.json({ error: "Invalid type" }, { status: 400 });
     }
 
-    return NextResponse.json(result);
+    if (result.count === 0) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting item:", error);
     return NextResponse.json({ error: "Error deleting item" }, { status: 500 });

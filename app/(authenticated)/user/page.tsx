@@ -7,6 +7,24 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Product, OrderItem } from "../../types";
 import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
+import {
+  ChevronLeft,
+  Plus,
+  Minus,
+  Trash2,
+  ShoppingBasket,
+  Maximize2,
+  Minimize2,
+  LayoutDashboard,
+} from "lucide-react";
+import {
+  Button,
+  Input,
+  Label,
+  IconButton,
+  EmptyState,
+  cn,
+} from "../../components/ui";
 
 function UserPageContent() {
   const { user, products, categories, subCategories, addOrder, updateOrder } =
@@ -182,48 +200,46 @@ function UserPageContent() {
     (s) => s.id === selectedSubCategory
   );
 
-  return (
-    <div className="min-h-screen bg-gray-100 flex flex-col h-screen overflow-hidden">
-      {/* No Navbar requested */}
+  const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
+  return (
+    <div className="min-h-screen bg-cream flex flex-col h-screen overflow-hidden">
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Left Side: Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden border-r border-gray-200 bg-gray-50 relative">
+        <div className="flex-1 flex flex-col overflow-hidden bg-cream relative">
           {/* Back Button & Title */}
-          <div className="p-4 bg-white shadow-sm flex items-center gap-4 shrink-0 h-16">
+          <div className="px-4 bg-surface border-b border-line flex items-center gap-3 shrink-0 h-16">
             {view !== "categories" && (
-              <button
-                onClick={handleBack}
-                className="p-2 rounded-full hover:bg-gray-100 text-gray-600"
-              >
-                ← Retour
-              </button>
+              <IconButton label="Retour" onClick={handleBack}>
+                <ChevronLeft className="h-5 w-5" />
+              </IconButton>
             )}
             <Image
               src="/logo.png"
-              alt="Logo"
+              alt="Logo Cahier du Chef"
               width={32}
               height={32}
               className="h-8 w-8"
             />
-            <h2 className="text-xl font-bold text-gray-800">
+            <h1 className="font-display text-lg sm:text-xl font-bold text-ink truncate">
               {view === "categories" && "Sélectionnez une catégorie"}
               {view === "subcategories" && currentCategory?.name}
               {view === "products" &&
                 (currentSubCategory?.name || currentCategory?.name)}
-            </h2>
+            </h1>
 
-            {/* Logout button moved here since navbar is gone */}
-            <div className="ml-auto flex items-center gap-4">
+            <div className="ml-auto flex items-center gap-3">
               {user?.role === "admin" && (
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => router.push("/admin")}
-                  className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-200 border border-gray-300"
                 >
-                  Retour Admin
-                </button>
+                  <LayoutDashboard className="h-4 w-4" aria-hidden />
+                  <span className="hidden sm:inline">Retour Admin</span>
+                </Button>
               )}
-              <span className="text-sm text-gray-500 hidden sm:inline">
+              <span className="text-sm text-ink-soft hidden sm:inline">
                 {user?.name}
               </span>
               <UserButton />
@@ -231,10 +247,10 @@ function UserPageContent() {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
             {/* Categories View */}
             {view === "categories" && (
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {categories.map((cat) => {
                   const catSubCategories = subCategories.filter(
                     (s) => s.categoryId === cat.id
@@ -243,12 +259,12 @@ function UserPageContent() {
                     <button
                       key={cat.id}
                       onClick={() => handleCategorySelect(cat.id)}
-                      className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-all text-center border border-gray-200 flex flex-col items-center justify-center gap-4 h-48"
+                      className="bg-surface p-6 sm:p-8 rounded-xl border border-line hover:border-gold hover:shadow-md active:scale-[0.98] transition-all duration-200 text-center flex flex-col items-center justify-center gap-3 h-40 sm:h-48 cursor-pointer"
                     >
-                      <span className="text-2xl font-bold text-gray-800">
+                      <span className="font-display text-xl sm:text-2xl font-bold text-ink">
                         {cat.name}
                       </span>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-ink-soft">
                         {catSubCategories.length
                           ? `${catSubCategories.length} sous-catégories`
                           : "Produits directs"}
@@ -261,16 +277,16 @@ function UserPageContent() {
 
             {/* Subcategories View */}
             {view === "subcategories" && currentCategory && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
                 {subCategories
                   .filter((s) => s.categoryId === currentCategory.id)
                   .map((sub) => (
                     <button
                       key={sub.id}
                       onClick={() => handleSubCategorySelect(sub.id)}
-                      className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-all text-center border border-gray-200 flex flex-col items-center justify-center h-40"
+                      className="bg-surface p-6 sm:p-8 rounded-xl border border-line hover:border-gold hover:shadow-md active:scale-[0.98] transition-all duration-200 text-center flex flex-col items-center justify-center h-32 sm:h-40 cursor-pointer"
                     >
-                      <span className="text-xl font-bold text-gray-800">
+                      <span className="font-display text-lg sm:text-xl font-bold text-ink">
                         {sub.name}
                       </span>
                     </button>
@@ -280,7 +296,7 @@ function UserPageContent() {
 
             {/* Products View */}
             {view === "products" && (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                 {filteredProducts.map((product) => {
                   const subCategory = subCategories.find(
                     (s) => s.id === product.subCategoryId
@@ -289,16 +305,24 @@ function UserPageContent() {
                     <button
                       key={product.id}
                       onClick={() => addToCart(product)}
-                      className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow text-left border border-gray-200 flex flex-col h-full"
+                      className="group bg-surface p-4 rounded-xl border border-line hover:border-gold hover:shadow-md active:scale-[0.98] transition-all duration-200 text-left flex flex-col h-full cursor-pointer"
                     >
-                      <div className="font-bold text-gray-800 mb-1">
+                      <div className="font-semibold text-ink mb-1">
                         {product.designation}
                       </div>
-                      <div className="text-sm text-gray-500 mb-2">
+                      <div className="text-sm text-ink-soft mb-3">
                         {subCategory?.name || ""}
                       </div>
-                      <div className="mt-auto text-lg font-semibold text-blue-600">
-                        {product.price.toFixed(2)} €
+                      <div className="mt-auto flex items-center justify-between">
+                        <span className="text-lg font-bold text-primary tabular-nums">
+                          {product.price.toFixed(2)} €
+                        </span>
+                        <span
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gold-soft text-gold-dark group-hover:bg-gold group-hover:text-white transition-colors"
+                          aria-hidden
+                        >
+                          <Plus className="h-4 w-4" />
+                        </span>
                       </div>
                     </button>
                   );
@@ -310,48 +334,55 @@ function UserPageContent() {
 
         {/* Right Side: Order Summary */}
         <div
-          className={`bg-white shadow-xl flex flex-col shrink-0 z-20 border-t md:border-t-0 md:border-l border-gray-200 transition-all duration-300 ${
+          className={cn(
+            "bg-surface shadow-xl flex flex-col shrink-0 z-20 border-t md:border-t-0 md:border-l border-line transition-all duration-300",
             isOrderFullScreen
               ? "fixed inset-0 w-full h-full"
               : "w-full md:w-80 lg:w-96 h-[40vh] md:h-auto"
-          }`}
+          )}
         >
-          <div className="p-4 md:p-6 border-b border-gray-200 bg-gray-50">
-            <div className="flex justify-between items-center mb-2 md:mb-4">
-              <h2 className="text-lg font-bold text-gray-800">
+          <div className="p-4 md:p-5 border-b border-line bg-cream/60">
+            <div className="flex justify-between items-center mb-3 md:mb-4">
+              <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
+                <ShoppingBasket className="h-5 w-5 text-gold-dark" aria-hidden />
                 {orderId ? "Modifier Commande" : "Nouvelle Commande"}
+                {cartCount > 0 && (
+                  <span className="inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-primary text-white text-xs font-bold tabular-nums">
+                    {cartCount}
+                  </span>
+                )}
               </h2>
-              <button
+              <IconButton
+                label={isOrderFullScreen ? "Réduire" : "Agrandir"}
                 onClick={() => setIsOrderFullScreen(!isOrderFullScreen)}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium px-2 py-1 rounded hover:bg-blue-50"
               >
-                {isOrderFullScreen ? "Réduire" : "Agrandir"}
-              </button>
+                {isOrderFullScreen ? (
+                  <Minimize2 className="h-4 w-4" />
+                ) : (
+                  <Maximize2 className="h-4 w-4" />
+                )}
+              </IconButton>
             </div>
 
-            <div className="space-y-2 md:space-y-4">
+            <div className="grid grid-cols-1 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Client
-                </label>
-                <input
+                <Label htmlFor="client-name">Client</Label>
+                <Input
+                  id="client-name"
                   type="text"
                   placeholder="Nom Prénom"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date de retrait
-                </label>
-                <input
+                <Label htmlFor="pickup-date">Date de retrait</Label>
+                <Input
+                  id="pickup-date"
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
                 />
               </div>
             </div>
@@ -360,70 +391,76 @@ function UserPageContent() {
           {/* Cart Items */}
           <div className="flex-1 overflow-y-auto p-4">
             {cart.length === 0 ? (
-              <div className="text-center text-gray-500 mt-10">Panier vide</div>
+              <EmptyState
+                icon={<ShoppingBasket className="h-6 w-6" aria-hidden />}
+                title="Panier vide"
+                description="Touchez un produit pour l'ajouter à la commande."
+              />
             ) : (
-              <div className="space-y-3">
+              <ul className="space-y-2.5">
                 {cart.map((item) => (
-                  <div
+                  <li
                     key={item.product.id}
-                    className="flex justify-between items-center bg-gray-50 p-3 rounded-md"
+                    className="flex justify-between items-center gap-3 bg-cream/70 border border-line p-3 rounded-xl"
                   >
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-800">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-ink truncate">
                         {item.product.designation}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-ink-soft tabular-nums">
                         {item.product.price.toFixed(2)} €
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center border border-gray-300 rounded-md bg-white">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center border border-line rounded-lg bg-surface overflow-hidden">
                         <button
                           onClick={() => updateQuantity(item.product.id, -1)}
-                          className="px-2 py-1 text-gray-600 hover:bg-gray-100"
+                          aria-label={`Réduire la quantité de ${item.product.designation}`}
+                          className="flex items-center justify-center h-9 w-9 text-ink-soft hover:bg-parchment hover:text-ink transition-colors cursor-pointer"
                         >
-                          -
+                          <Minus className="h-4 w-4" />
                         </button>
-                        <span className="px-2 font-medium text-gray-800">
+                        <span className="w-8 text-center font-bold text-ink tabular-nums">
                           {item.quantity}
                         </span>
                         <button
                           onClick={() => updateQuantity(item.product.id, 1)}
-                          className="px-2 py-1 text-gray-600 hover:bg-gray-100"
+                          aria-label={`Augmenter la quantité de ${item.product.designation}`}
+                          className="flex items-center justify-center h-9 w-9 text-ink-soft hover:bg-parchment hover:text-ink transition-colors cursor-pointer"
                         >
-                          +
+                          <Plus className="h-4 w-4" />
                         </button>
                       </div>
-                      <button
+                      <IconButton
+                        label={`Retirer ${item.product.designation}`}
+                        tone="danger"
                         onClick={() => removeFromCart(item.product.id)}
-                        className="text-red-500 hover:text-red-700"
                       >
-                        ×
-                      </button>
+                        <Trash2 className="h-4 w-4" />
+                      </IconButton>
                     </div>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </div>
 
           {/* Footer */}
-          <div className="p-6 border-t border-gray-200 bg-gray-50">
-            <div className="flex justify-between items-center mb-4 text-xl font-bold text-gray-900">
-              <span>Total</span>
-              <span>{calculateTotal().toFixed(2)} €</span>
+          <div className="p-4 md:p-5 border-t border-line bg-cream/60">
+            <div className="flex justify-between items-center mb-4 font-bold text-ink">
+              <span className="text-lg">Total</span>
+              <span className="font-display text-2xl tabular-nums">
+                {calculateTotal().toFixed(2)} €
+              </span>
             </div>
-            <button
+            <Button
               onClick={handleSaveOrder}
               disabled={cart.length === 0}
-              className={`w-full py-3 rounded-lg font-bold text-white transition-colors ${
-                cart.length === 0
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-green-600 hover:bg-green-700 shadow-md"
-              }`}
+              size="lg"
+              className="w-full"
             >
               {orderId ? "Mettre à jour" : "Valider la commande"}
-            </button>
+            </Button>
           </div>
         </div>
       </main>
@@ -433,7 +470,13 @@ function UserPageContent() {
 
 export default function UserPage() {
   return (
-    <Suspense fallback={<div>Chargement...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-cream text-ink-soft">
+          Chargement...
+        </div>
+      }
+    >
       <UserPageContent />
     </Suspense>
   );

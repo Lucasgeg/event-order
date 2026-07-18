@@ -177,6 +177,8 @@ async function main() {
       orderItems.push({
         productId: randomProduct.id,
         quantity: quantity,
+        unitPrice: randomProduct.price,
+        designation: randomProduct.designation,
       });
     }
 

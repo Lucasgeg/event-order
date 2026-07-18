@@ -26,6 +26,43 @@ import {
   cn,
 } from "../../components/ui";
 
+function QuantityInput({
+  value,
+  onCommit,
+  label,
+}: {
+  value: number;
+  onCommit: (quantity: number) => void;
+  label: string;
+}) {
+  // Draft local pour autoriser un champ vide pendant la saisie
+  const [draft, setDraft] = useState<string | null>(null);
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      value={draft ?? String(value)}
+      aria-label={label}
+      onFocus={(e) => e.target.select()}
+      onChange={(e) => {
+        const digits = e.target.value.replace(/\D/g, "");
+        setDraft(digits);
+        const parsed = parseInt(digits, 10);
+        if (!Number.isNaN(parsed) && parsed >= 1) {
+          onCommit(parsed);
+        }
+      }}
+      onBlur={() => setDraft(null)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") e.currentTarget.blur();
+      }}
+      className="w-12 h-9 text-center font-bold text-ink tabular-nums bg-transparent focus:outline-none focus:bg-parchment"
+    />
+  );
+}
+
 function UserPageContent() {
   const { user, products, categories, subCategories, addOrder, updateOrder } =
     useApp();
@@ -92,7 +129,15 @@ function UserPageContent() {
             : item
         );
       }
-      return [...prev, { product, quantity: 1 }];
+      return [
+        ...prev,
+        {
+          product,
+          quantity: 1,
+          unitPrice: product.price,
+          designation: product.designation,
+        },
+      ];
     });
   };
 
@@ -112,9 +157,17 @@ function UserPageContent() {
     });
   };
 
+  const setItemQuantity = (productId: string, quantity: number) => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.product.id === productId ? { ...item, quantity } : item
+      )
+    );
+  };
+
   const calculateTotal = () => {
     return cart.reduce(
-      (total, item) => total + item.product.price * item.quantity,
+      (total, item) => total + item.unitPrice * item.quantity,
       0
     );
   };
@@ -209,11 +262,6 @@ function UserPageContent() {
         <div className="flex-1 flex flex-col overflow-hidden bg-cream relative">
           {/* Back Button & Title */}
           <div className="px-4 bg-surface border-b border-line flex items-center gap-3 shrink-0 h-16">
-            {view !== "categories" && (
-              <IconButton label="Retour" onClick={handleBack}>
-                <ChevronLeft className="h-5 w-5" />
-              </IconButton>
-            )}
             <Image
               src="/logo.png"
               alt="Logo Cahier du Chef"
@@ -221,12 +269,6 @@ function UserPageContent() {
               height={32}
               className="h-8 w-8"
             />
-            <h1 className="font-display text-lg sm:text-xl font-bold text-ink truncate">
-              {view === "categories" && "Sélectionnez une catégorie"}
-              {view === "subcategories" && currentCategory?.name}
-              {view === "products" &&
-                (currentSubCategory?.name || currentCategory?.name)}
-            </h1>
 
             <div className="ml-auto flex items-center gap-3">
               {user?.role === "admin" && (
@@ -248,6 +290,21 @@ function UserPageContent() {
 
           {/* Main Content */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+            {/* Navigation Title */}
+            <div className="flex items-center gap-3 mb-4 sm:mb-6">
+              {view !== "categories" && (
+                <IconButton label="Retour" onClick={handleBack}>
+                  <ChevronLeft className="h-5 w-5" />
+                </IconButton>
+              )}
+              <h1 className="font-display text-xl sm:text-2xl font-bold text-ink">
+                {view === "categories" && "Sélectionnez une catégorie"}
+                {view === "subcategories" && currentCategory?.name}
+                {view === "products" &&
+                  (currentSubCategory?.name || currentCategory?.name)}
+              </h1>
+            </div>
+
             {/* Categories View */}
             {view === "categories" && (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -405,34 +462,38 @@ function UserPageContent() {
                   >
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-ink truncate">
-                        {item.product.designation}
+                        {item.designation}
                       </div>
                       <div className="text-sm text-ink-soft tabular-nums">
-                        {item.product.price.toFixed(2)} €
+                        {item.unitPrice.toFixed(2)} €
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex items-center border border-line rounded-lg bg-surface overflow-hidden">
                         <button
                           onClick={() => updateQuantity(item.product.id, -1)}
-                          aria-label={`Réduire la quantité de ${item.product.designation}`}
+                          aria-label={`Réduire la quantité de ${item.designation}`}
                           className="flex items-center justify-center h-9 w-9 text-ink-soft hover:bg-parchment hover:text-ink transition-colors cursor-pointer"
                         >
                           <Minus className="h-4 w-4" />
                         </button>
-                        <span className="w-8 text-center font-bold text-ink tabular-nums">
-                          {item.quantity}
-                        </span>
+                        <QuantityInput
+                          value={item.quantity}
+                          onCommit={(qty) =>
+                            setItemQuantity(item.product.id, qty)
+                          }
+                          label={`Quantité de ${item.designation}`}
+                        />
                         <button
                           onClick={() => updateQuantity(item.product.id, 1)}
-                          aria-label={`Augmenter la quantité de ${item.product.designation}`}
+                          aria-label={`Augmenter la quantité de ${item.designation}`}
                           className="flex items-center justify-center h-9 w-9 text-ink-soft hover:bg-parchment hover:text-ink transition-colors cursor-pointer"
                         >
                           <Plus className="h-4 w-4" />
                         </button>
                       </div>
                       <IconButton
-                        label={`Retirer ${item.product.designation}`}
+                        label={`Retirer ${item.designation}`}
                         tone="danger"
                         onClick={() => removeFromCart(item.product.id)}
                       >

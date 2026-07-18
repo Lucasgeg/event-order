@@ -35,7 +35,7 @@ if (!orgId) return 401;
 // then always filter/scope by { tenantId: orgId }
 ```
 
-When adding queries or mutations, you **must** scope by `tenantId: orgId` or you leak/cross-write between tenants. Note: some existing DELETE/PUT handlers (`api/orders` DELETE, `api/catalog` PUT/DELETE) look up rows by `id` alone without the tenant scope — follow the *scoped* pattern for new code, don't copy the unscoped ones.
+When adding queries or mutations, you **must** scope by `tenantId: orgId` or you leak/cross-write between tenants. As of 2026-07-18 every API route follows this pattern — keep it that way.
 
 ### Auth & roles (Clerk is source of truth)
 - Middleware lives in **`proxy.ts`** (Next.js 16 renamed `middleware.ts` → `proxy.ts`), not the usual filename. It runs `clerkMiddleware`, redirects signed-in users away from `/login`·`/inscription`, and gates `/admin*` on `orgRole === "org:admin"`.

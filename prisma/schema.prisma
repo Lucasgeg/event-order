@@ -82,5 +82,7 @@ model OrderItem {
   orderId   String
   product   Product @relation(fields: [productId], references: [id])
   productId String
-  quantity  Int
+  quantity    Int
+  unitPrice   Float // prix du produit figé au moment de la commande
+  designation String // nom du produit figé au moment de la commande
 }

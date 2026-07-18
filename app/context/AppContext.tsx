@@ -191,6 +191,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           clientName: order.clientName,
           pickupDate: order.pickupDate,
           items: order.items?.map((item) => ({
+            id: item.id,
             productId: item.product.id,
             quantity: item.quantity,
           })),

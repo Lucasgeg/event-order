@@ -4,6 +4,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
 
 interface OrderItemInput {
+  /** Présent = ligne d'origine (valeurs figées conservées) ; absent = nouvelle ligne */
+  id?: string;
   productId: string;
   quantity: number;
 }
@@ -141,7 +143,7 @@ export async function GET(request: Request) {
     console.error("Error fetching orders:", error);
     return NextResponse.json(
       { error: "Error fetching orders" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -169,18 +171,38 @@ export async function POST(request: Request) {
           error:
             "Missing required fields: clientName, pickupDate, and items (array)",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Validate items
     for (const item of items) {
-      if (!item.productId || !item.quantity || item.quantity <= 0) {
+      if (
+        !item.productId ||
+        !Number.isInteger(item.quantity) ||
+        item.quantity <= 0
+      ) {
         return NextResponse.json(
-          { error: "Invalid item: must have productId and quantity > 0" },
-          { status: 400 }
+          {
+            error: "Invalid item: must have productId and integer quantity > 0",
+          },
+          { status: 400 },
         );
       }
+    }
+
+    // Le prix et la désignation sont figés côté serveur au moment de la commande
+    const dbProducts = await prisma.product.findMany({
+      where: {
+        id: { in: items.map((item) => item.productId) },
+        tenantId: orgId,
+      },
+      select: { id: true, price: true, designation: true },
+    });
+    const productById = new Map(dbProducts.map((p) => [p.id, p]));
+
+    if (items.some((item) => !productById.has(item.productId))) {
+      return NextResponse.json({ error: "Unknown product" }, { status: 400 });
     }
 
     const order = await prisma.order.create({
@@ -192,6 +214,8 @@ export async function POST(request: Request) {
           create: items.map((item) => ({
             product: { connect: { id: item.productId } },
             quantity: item.quantity,
+            unitPrice: productById.get(item.productId)!.price,
+            designation: productById.get(item.productId)!.designation,
           })),
         },
       },
@@ -209,7 +233,7 @@ export async function POST(request: Request) {
     console.error("Error creating order:", error);
     return NextResponse.json(
       { error: "Error creating order" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -238,20 +262,62 @@ export async function PUT(request: Request) {
     if (items && Array.isArray(items)) {
       // Validate items
       for (const item of items) {
-        if (!item.productId || !item.quantity || item.quantity <= 0) {
+        if (
+          !item.productId ||
+          !Number.isInteger(item.quantity) ||
+          item.quantity <= 0
+        ) {
           return NextResponse.json(
-            { error: "Invalid item: must have productId and quantity > 0" },
-            { status: 400 }
+            {
+              error:
+                "Invalid item: must have productId and integer quantity > 0",
+            },
+            { status: 400 },
           );
         }
       }
 
+      // Une ligne renvoyée avec son id d'origine garde ses valeurs figées ;
+      // une ligne sans id (ajoutée, ou supprimée puis recréée) prend les
+      // valeurs actuelles du catalogue
+      const [existingItems, dbProducts] = await Promise.all([
+        prisma.orderItem.findMany({
+          where: { orderId: id, order: { tenantId: orgId } },
+          select: {
+            id: true,
+            productId: true,
+            unitPrice: true,
+            designation: true,
+          },
+        }),
+        prisma.product.findMany({
+          where: {
+            id: { in: items.map((item) => item.productId) },
+            tenantId: orgId,
+          },
+          select: { id: true, price: true, designation: true },
+        }),
+      ]);
+      const frozenByItemId = new Map(existingItems.map((i) => [i.id, i]));
+      const currentByProductId = new Map(dbProducts.map((p) => [p.id, p]));
+
+      if (items.some((item) => !currentByProductId.has(item.productId))) {
+        return NextResponse.json({ error: "Unknown product" }, { status: 400 });
+      }
+
       updateData.items = {
         deleteMany: {}, // Delete all existing items
-        create: items.map((item) => ({
-          product: { connect: { id: item.productId } },
-          quantity: item.quantity,
-        })),
+        create: items.map((item) => {
+          const frozen = item.id ? frozenByItemId.get(item.id) : undefined;
+          const current = currentByProductId.get(item.productId)!;
+          const keepFrozen = frozen && frozen.productId === item.productId;
+          return {
+            product: { connect: { id: item.productId } },
+            quantity: item.quantity,
+            unitPrice: keepFrozen ? frozen.unitPrice : current.price,
+            designation: keepFrozen ? frozen.designation : current.designation,
+          };
+        }),
       };
     }
 
@@ -272,7 +338,7 @@ export async function PUT(request: Request) {
     console.error("Error updating order:", error);
     return NextResponse.json(
       { error: "Error updating order" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -305,7 +371,7 @@ export async function DELETE(request: Request) {
     console.error("Error deleting order:", error);
     return NextResponse.json(
       { error: "Error deleting order" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

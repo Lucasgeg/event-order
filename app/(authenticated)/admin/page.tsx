@@ -1079,7 +1079,7 @@ function OrdersManager() {
                               <span className="font-semibold text-ink tabular-nums">
                                 {item.quantity}×
                               </span>{" "}
-                              {item.product.designation}
+                              {item.designation}
                             </li>
                           ))}
                         </ul>
@@ -1088,7 +1088,7 @@ function OrdersManager() {
                         {order.items
                           .reduce(
                             (acc, item) =>
-                              acc + item.product.price * item.quantity,
+                              acc + item.unitPrice * item.quantity,
                             0
                           )
                           .toFixed(2)}{" "}

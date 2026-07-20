@@ -39,6 +39,7 @@ When adding queries or mutations, you **must** scope by `tenantId: orgId` or you
 
 ### Auth & roles (Clerk is source of truth)
 - Middleware lives in **`proxy.ts`** (Next.js 16 renamed `middleware.ts` → `proxy.ts`), not the usual filename. It runs `clerkMiddleware`, redirects signed-in users away from `/login`·`/inscription`, and gates `/admin*` on `orgRole === "org:admin"`.
+- Order **mutations** are role-gated server-side: `PUT`/`DELETE` on `/api/orders*` require `org:admin` (403 otherwise); `POST` stays open to members. `/commandes` is the member-accessible read view of orders (shared `app/components/OrdersManager.tsx`, also used by the admin tab; edit/delete buttons render disabled for non-admins). See `docs/adr/0001-commandes-lecture-seule-membres.md`.
 - Two role vocabularies coexist: Clerk (`org:admin` / `org:member`) and a DB enum `TenantRole` (`ADMIN` / `USER`) on `TenantMember`. Authorization decisions use **Clerk** roles (see `api/members` admin checks). The `TenantMember` table is a partial mirror, best-effort synced — treat Clerk as authoritative.
 
 ### Prisma client is generated OUT of node_modules

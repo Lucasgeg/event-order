@@ -57,10 +57,17 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { orgId } = await auth();
+    const { orgId, orgRole } = await auth();
 
     if (!orgId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (orgRole !== "org:admin") {
+      return NextResponse.json(
+        { error: "Réservé aux administrateurs" },
+        { status: 403 },
+      );
     }
 
     const { id } = await params;
@@ -201,10 +208,17 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { orgId } = await auth();
+    const { orgId, orgRole } = await auth();
 
     if (!orgId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (orgRole !== "org:admin") {
+      return NextResponse.json(
+        { error: "Réservé aux administrateurs" },
+        { status: 403 },
+      );
     }
 
     const { id } = await params;

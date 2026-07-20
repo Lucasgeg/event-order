@@ -79,6 +79,7 @@ export function IconButton({
       title={label}
       className={cn(
         "inline-flex items-center justify-center h-9 w-9 rounded-lg transition-colors duration-200 cursor-pointer",
+        "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-ink-soft",
         tones[tone],
         className
       )}

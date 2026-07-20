@@ -16,6 +16,7 @@ import {
   Maximize2,
   Minimize2,
   LayoutDashboard,
+  ClipboardList,
 } from "lucide-react";
 import {
   Button,
@@ -84,6 +85,15 @@ function UserPageContent() {
     null
   );
   const [isOrderFullScreen, setIsOrderFullScreen] = useState(false);
+
+  // L'édition d'une commande existante est réservée aux admins (l'API refuse
+  // le PUT aux membres) — on ne laisse pas un membre s'engager dans un
+  // formulaire qu'il ne pourra pas soumettre.
+  useEffect(() => {
+    if (orderId && user && user.role !== "admin") {
+      router.replace("/commandes");
+    }
+  }, [orderId, user, router]);
 
   useEffect(() => {
     if (orderId) {
@@ -271,6 +281,14 @@ function UserPageContent() {
             />
 
             <div className="ml-auto flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push("/commandes")}
+              >
+                <ClipboardList className="h-4 w-4" aria-hidden />
+                <span className="hidden sm:inline">Commandes</span>
+              </Button>
               {user?.role === "admin" && (
                 <Button
                   variant="outline"

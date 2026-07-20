@@ -240,10 +240,17 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { orgId } = await auth();
+    const { orgId, orgRole } = await auth();
 
     if (!orgId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (orgRole !== "org:admin") {
+      return NextResponse.json(
+        { error: "Réservé aux administrateurs" },
+        { status: 403 },
+      );
     }
 
     const body: UpdateOrderBody = await request.json();
@@ -345,10 +352,17 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { orgId } = await auth();
+    const { orgId, orgRole } = await auth();
 
     if (!orgId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (orgRole !== "org:admin") {
+      return NextResponse.json(
+        { error: "Réservé aux administrateurs" },
+        { status: 403 },
+      );
     }
 
     const { searchParams } = new URL(request.url);

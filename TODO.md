@@ -6,43 +6,6 @@
 
 ## Bugs
 
-### Connexion cassée après mise à jour Clerk : statut `needs_client_trust` non géré
-
-- **Contexte** : mise à jour de l'instance Clerk pour la "Reset password
-  session task" (voir item ci-dessous). Clerk avertit que le nouveau statut
-  de sign-in `needs_client_trust` doit être géré côté custom flow.
-- **Symptôme attendu après la mise à jour** : `app/login/page.tsx` —
-  `handleSignIn` (ligne ~57) et `handleResetPassword` (ligne ~165) ne testent
-  que `result.status === "complete"` et `"needs_second_factor"` ; tout le
-  reste tombe dans un `else { console.log(...) }` muet. `needs_client_trust`
-  se déclenche quand le mot de passe est correct, que le MFA n'est pas activé
-  et que la connexion vient d'un nouvel appareil — donc systématiquement à la
-  toute première connexion de chaque compte fraîchement provisionné par
-  `create-organization`. Sans fix, la première connexion de tout nouvel
-  utilisateur reste bloquée silencieusement (pas d'erreur, juste le bouton qui
-  s'arrête de charger).
-- **Vérifié** : rien dans le code ne référence `client_trust_state`, donc
-  l'autre partie de l'avertissement Clerk ne nous concerne pas.
-- **Débloqué** : `@clerk/nextjs` mis à jour `6.36.5` → `7.8.0` (voir commit
-  dédié). Le type `SignInStatus` inclut maintenant `needs_client_trust`
-  (`node_modules/@clerk/shared/dist/types/signInCommon.d.ts`). L'upgrade a été
-  faite via `bunx @clerk/upgrade` (codemods officiels) ; les 3 points signalés
-  par son scanner ont été vérifiés et ne nous concernent pas (0 usage de
-  Device Trust existant, `auth.protect()` 401-vs-404 ne s'applique qu'aux
-  Server Actions — absentes du projet —, et les 2 "redirect props" signalées
-  étaient des faux positifs : `afterSignOutUrl` sur `ClerkProvider` et
-  `redirectUrl` sur `createOrganizationInvitation` restent les bons noms).
-  Testé manuellement (`bun run dev`) : `/login`, `/` répondent 200,
-  `/user`/`/admin`/`/commandes` redirigent proprement vers `/login` sans
-  session — pas de régression sur le fix `/user`+`/commandes` du bug
-  précédent malgré l'issue GitHub connue sur `auth.protect()` en v7.
-- **Reste à faire** : élargir la condition à
-  `result.status === "needs_second_factor" || result.status === "needs_client_trust"`
-  aux deux endroits (`handleSignIn` et `handleResetPassword` dans
-  `app/login/page.tsx`), même mécanique que `needs_second_factor` (check
-  `email_code` dans `supportedSecondFactors`, `prepareSecondFactor`, écran
-  `verify-2fa`, `attemptSecondFactor`).
-
 ### Le mot de passe temporaire "compromis" n'est jamais vraiment réinitialisé
 
 - **Symptôme** : à l'inscription, `setPasswordCompromised` est appelé sur les

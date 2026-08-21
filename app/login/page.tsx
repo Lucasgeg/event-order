@@ -56,7 +56,10 @@ export default function LoginPage() {
       });
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-      } else if (result.status === "needs_second_factor") {
+      } else if (
+        result.status === "needs_second_factor" ||
+        result.status === "needs_client_trust"
+      ) {
         // Check if email_code is supported
         const isEmailCodeSupported = result.supportedSecondFactors?.some(
           (f) => f.strategy === "email_code"
@@ -162,7 +165,10 @@ export default function LoginPage() {
           password: newPassword,
         })
         .then(async (result) => {
-          if (result.status === "needs_second_factor") {
+          if (
+            result.status === "needs_second_factor" ||
+            result.status === "needs_client_trust"
+          ) {
             const isEmailCodeSupported = result.supportedSecondFactors?.some(
               (f) => f.strategy === "email_code"
             );

@@ -23,27 +23,25 @@
   s'arrête de charger).
 - **Vérifié** : rien dans le code ne référence `client_trust_state`, donc
   l'autre partie de l'avertissement Clerk ne nous concerne pas.
-- **Bloqué par une lacune du SDK** : tenté d'élargir la condition à
+- **Débloqué** : `@clerk/nextjs` mis à jour `6.36.5` → `7.8.0` (voir commit
+  dédié). Le type `SignInStatus` inclut maintenant `needs_client_trust`
+  (`node_modules/@clerk/shared/dist/types/signInCommon.d.ts`). L'upgrade a été
+  faite via `bunx @clerk/upgrade` (codemods officiels) ; les 3 points signalés
+  par son scanner ont été vérifiés et ne nous concernent pas (0 usage de
+  Device Trust existant, `auth.protect()` 401-vs-404 ne s'applique qu'aux
+  Server Actions — absentes du projet —, et les 2 "redirect props" signalées
+  étaient des faux positifs : `afterSignOutUrl` sur `ClerkProvider` et
+  `redirectUrl` sur `createOrganizationInvitation` restent les bons noms).
+  Testé manuellement (`bun run dev`) : `/login`, `/` répondent 200,
+  `/user`/`/admin`/`/commandes` redirigent proprement vers `/login` sans
+  session — pas de régression sur le fix `/user`+`/commandes` du bug
+  précédent malgré l'issue GitHub connue sur `auth.protect()` en v7.
+- **Reste à faire** : élargir la condition à
   `result.status === "needs_second_factor" || result.status === "needs_client_trust"`
-  (même mécanique que `needs_second_factor` : check `email_code` dans
-  `supportedSecondFactors`, `prepareSecondFactor`, écran `verify-2fa`,
-  `attemptSecondFactor`) — mais `tsc` rejette la comparaison (`TS2367`) : le
-  type `SignInStatus` de `@clerk/shared@3.41.1` (dépendance de
-  `@clerk/nextjs@6.36.5`, version installée) ne connaît pas
-  `needs_client_trust`. Dernière version stable de `@clerk/nextjs` : `7.8.0`,
-  un **major bump** avec breaking changes connus (issue GitHub ouverte :
-  `auth.protect()` dans un `proxy.ts` sous Next.js 16 redirige vers l'URL
-  courante au lieu de la page de connexion — risque de casser le fix du bug
-  ci-dessus sur `/user`/`/commandes`). Il existe des patchs v6 plus récents
-  (jusqu'à `6.39.6`) pas encore vérifiés pour savoir s'ils typent déjà ce
-  statut sans nécessiter le saut vers v7.
-- **Reste à faire** :
-  1. Vérifier si un patch v6 (`6.36.5` → `6.39.6`) type déjà `needs_client_trust`.
-  2. Si non : décider entre bump vers v7 (revue dédiée aux breaking changes,
-     notamment l'issue `proxy.ts`) ou cast temporaire
-     (`(result.status as string) === "needs_client_trust"`) en attendant.
-  3. Élargir la condition aux deux endroits (`handleSignIn` et
-     `handleResetPassword`) une fois le typage résolu.
+  aux deux endroits (`handleSignIn` et `handleResetPassword` dans
+  `app/login/page.tsx`), même mécanique que `needs_second_factor` (check
+  `email_code` dans `supportedSecondFactors`, `prepareSecondFactor`, écran
+  `verify-2fa`, `attemptSecondFactor`).
 
 ### Le mot de passe temporaire "compromis" n'est jamais vraiment réinitialisé
 
@@ -72,6 +70,17 @@
      de Clerk, ou équivalent custom cohérent avec le reste du flow de login).
 
 ## Qualité / dette
+
+### `createRouteMatcher` déprécié côté Clerk
+
+Depuis la mise à jour vers `@clerk/nextjs@7.8.0`, `bun run dev` affiche :
+`"createRouteMatcher" is deprecated and will be removed in the next major
+release. Use resource-based auth checks instead.` — Clerk recommande de
+déplacer les vérifications d'auth dans chaque page/layout/route plutôt que
+dans `proxy.ts` (matching par chemin, qui peut diverger du routing réel de
+Next.js). Pas urgent (fonctionne encore), mais `proxy.ts` (routes `/admin`,
+`/user`, `/commandes`) et ce pattern devront être migrés avant le prochain
+major de Clerk. Guide : https://clerk.com/docs/guides/development/upgrading/upgrade-guides/migrate-from-create-route-matcher
 
 ### Pas de confirmation de saisie sur le nouveau mot de passe
 

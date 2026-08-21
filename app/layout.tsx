@@ -27,12 +27,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider afterSignOutUrl="/">
-      <html lang="fr" className={`${playfair.variable} ${karla.variable}`}>
-        <body className="antialiased bg-cream text-ink font-sans">
-          {children}
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="fr" className={`${playfair.variable} ${karla.variable}`}>
+      <body className="antialiased bg-cream text-ink font-sans">
+        <ClerkProvider afterSignOutUrl="/">{children}</ClerkProvider>
+      </body>
+    </html>
   );
 }

@@ -137,6 +137,8 @@ export async function POST(req: Request) {
         },
       });
     } catch (e: any) {
+      console.error("Error in create-organization (post-admin steps):", e);
+
       // Best-effort cleanup of whatever was created before the failure.
       // Deleting the organization also removes its memberships; the admin
       // user is deleted separately since it was created before this block.

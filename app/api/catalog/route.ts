@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
 
 export async function GET() {
@@ -157,16 +158,20 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  let orgId: string | null | undefined;
+  let type: string | null = null;
+  let id: string | null = null;
+
   try {
-    const { orgId } = await auth();
+    ({ orgId } = await auth());
 
     if (!orgId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get("type");
-    const id = searchParams.get("id");
+    type = searchParams.get("type");
+    id = searchParams.get("id");
 
     if (!id || !type) {
       return NextResponse.json(
@@ -176,6 +181,7 @@ export async function DELETE(request: Request) {
     }
 
     let result;
+    let action: "deleted" | "deactivated" = "deleted";
 
     switch (type) {
       case "category":
@@ -188,11 +194,33 @@ export async function DELETE(request: Request) {
           where: { id, category: { tenantId: orgId } },
         });
         break;
-      case "product":
-        result = await prisma.product.deleteMany({
+      case "product": {
+        const product = await prisma.product.findFirst({
           where: { id, tenantId: orgId },
+          select: { id: true },
         });
+
+        if (!product) {
+          return NextResponse.json({ error: "Not found" }, { status: 404 });
+        }
+
+        const orderItemCount = await prisma.orderItem.count({
+          where: { productId: id },
+        });
+
+        if (orderItemCount === 0) {
+          result = await prisma.product.deleteMany({
+            where: { id, tenantId: orgId },
+          });
+        } else {
+          action = "deactivated";
+          result = await prisma.product.updateMany({
+            where: { id, tenantId: orgId },
+            data: { isActive: false },
+          });
+        }
         break;
+      }
       default:
         return NextResponse.json({ error: "Invalid type" }, { status: 400 });
     }
@@ -201,8 +229,29 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, action });
   } catch (error) {
+    // Filet de sécurité : si un produit référencé par une commande échappe
+    // au pré-check ci-dessus (race condition), on désactive au lieu de 500.
+    if (
+      type === "product" &&
+      id &&
+      orgId &&
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2003"
+    ) {
+      const fallback = await prisma.product.updateMany({
+        where: { id, tenantId: orgId },
+        data: { isActive: false },
+      });
+
+      if (fallback.count === 0) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+
+      return NextResponse.json({ success: true, action: "deactivated" });
+    }
+
     console.error("Error deleting item:", error);
     return NextResponse.json({ error: "Error deleting item" }, { status: 500 });
   }

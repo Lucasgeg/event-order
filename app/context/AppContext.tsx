@@ -19,7 +19,9 @@ interface AppContextType {
   products: Product[];
   addProduct: (product: Omit<Product, "id">) => Promise<void>;
   updateProduct: (product: Product) => Promise<void>;
-  deleteProduct: (id: string) => Promise<void>;
+  deleteProduct: (
+    id: string
+  ) => Promise<{ action: "deleted" | "deactivated" }>;
 
   categories: Category[];
   addCategory: (category: Omit<Category, "id">) => Promise<void>;
@@ -100,10 +102,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteProduct = async (id: string) => {
-    await fetch(`/api/catalog?type=product&id=${id}`, {
+    const res = await fetch(`/api/catalog?type=product&id=${id}`, {
       method: "DELETE",
     });
+
+    if (!res.ok) {
+      throw new Error("Failed to delete product");
+    }
+
+    const data = await res.json();
     await refreshData();
+    return { action: data.action as "deleted" | "deactivated" };
   };
 
   // Category Actions

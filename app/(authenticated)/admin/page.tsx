@@ -618,6 +618,19 @@ function ProductsManager({
     setEditFormData({});
   };
 
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      const { action } = await deleteProduct(productId);
+      if (action === "deactivated") {
+        alert(
+          "Ce produit a déjà été commandé, il ne peut pas être supprimé : il a été désactivé et n'apparaîtra plus dans le catalogue."
+        );
+      }
+    } catch {
+      alert("Erreur lors de la suppression du produit. Réessayez ou contactez le support.");
+    }
+  };
+
   const saveEdit = (productId: string) => {
     if (!editFormData.categoryId || !editFormData.designation) {
       return;
@@ -912,7 +925,7 @@ function ProductsManager({
                         <IconButton
                           label={`Supprimer ${product.designation}`}
                           tone="danger"
-                          onClick={() => deleteProduct(product.id)}
+                          onClick={() => handleDeleteProduct(product.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </IconButton>

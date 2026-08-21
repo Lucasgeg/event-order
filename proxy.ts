@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 
 const isLoginPage = createRouteMatcher(["/login", "/inscription"]);
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+const isProtectedRoute = createRouteMatcher([
+  "/admin(.*)",
+  "/user(.*)",
+  "/commandes(.*)",
+]);
 
 export default clerkMiddleware(
   async (auth, req) => {
@@ -16,11 +21,11 @@ export default clerkMiddleware(
       return NextResponse.redirect(new URL("/user", req.url));
     }
 
-    // Protect admin routes
-    if (isAdminRoute(req)) {
+    // Protect authenticated routes
+    if (isProtectedRoute(req)) {
       await auth.protect();
 
-      if (orgRole !== "org:admin") {
+      if (isAdminRoute(req) && orgRole !== "org:admin") {
         return NextResponse.redirect(new URL("/", req.url));
       }
     }

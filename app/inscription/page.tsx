@@ -30,9 +30,18 @@ export default function RegistrationPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
     setSuccess(false);
+
+    if (
+      formData.adminEmail.trim().toLowerCase() ===
+      formData.memberEmail.trim().toLowerCase()
+    ) {
+      setError("L'email admin et l'email membre doivent être différents.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const response = await fetch("/api/public/create-organization", {

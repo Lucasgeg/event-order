@@ -51,6 +51,16 @@ export async function POST(req: Request) {
       );
     }
 
+    if (adminEmail.trim().toLowerCase() === memberEmail.trim().toLowerCase()) {
+      return NextResponse.json(
+        {
+          error:
+            "L'email admin et l'email membre doivent être différents.",
+        },
+        { status: 400 }
+      );
+    }
+
     const client = await clerkClient();
 
     // 1. Generate passwords
@@ -78,15 +88,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Create Organization (Admin is creator)
-    const organization = await client.organizations.createOrganization({
-      name: organisationName,
-      createdBy: adminUser.id,
-    });
-
-    // 4. Create Member User
+    // From this point on, the admin Clerk user exists: any failure below must
+    // roll back everything created so far before returning an error, or we
+    // leave orphaned Clerk resources with no matching Tenant in DB.
+    let organization;
     let memberUser;
     try {
+      // 3. Create Organization (Admin is creator)
+      organization = await client.organizations.createOrganization({
+        name: organisationName,
+        createdBy: adminUser.id,
+      });
+
+      // 4. Create Member User
       memberUser = await client.users.createUser({
         emailAddress: [memberEmail],
         firstName: memberFirstName,
@@ -95,39 +109,56 @@ export async function POST(req: Request) {
         skipPasswordChecks: false,
         skipPasswordRequirement: false,
       });
+
+      // 5. Add Member to Organization
+      await client.organizations.createOrganizationMembership({
+        organizationId: organization.id,
+        userId: memberUser.id,
+        role: "org:member",
+      });
+
+      // Create Tenant and Members in DB
+      await prisma.tenant.create({
+        data: {
+          id: organization.id,
+          name: organisationName,
+          members: {
+            create: [
+              {
+                userId: adminUser.id,
+                role: "ADMIN",
+              },
+              {
+                userId: memberUser.id,
+                role: "USER",
+              },
+            ],
+          },
+        },
+      });
     } catch (e: any) {
+      // Best-effort cleanup of whatever was created before the failure.
+      // Deleting the organization also removes its memberships; the admin
+      // user is deleted separately since it was created before this block.
+      await Promise.allSettled([
+        organization
+          ? client.organizations.deleteOrganization(organization.id)
+          : Promise.resolve(),
+        memberUser ? client.users.deleteUser(memberUser.id) : Promise.resolve(),
+        client.users.deleteUser(adminUser.id),
+      ]).then((results) => {
+        for (const result of results) {
+          if (result.status === "rejected") {
+            console.error("Cleanup failed after signup error:", result.reason);
+          }
+        }
+      });
+
       return NextResponse.json(
-        { error: `Error creating member user: ${e.message}` },
+        { error: `Error creating organization: ${e.message}` },
         { status: 400 }
       );
     }
-
-    // 5. Add Member to Organization
-    await client.organizations.createOrganizationMembership({
-      organizationId: organization.id,
-      userId: memberUser.id,
-      role: "org:member",
-    });
-
-    // Create Tenant and Members in DB
-    await prisma.tenant.create({
-      data: {
-        id: organization.id,
-        name: organisationName,
-        members: {
-          create: [
-            {
-              userId: adminUser.id,
-              role: "ADMIN",
-            },
-            {
-              userId: memberUser.id,
-              role: "USER",
-            },
-          ],
-        },
-      },
-    });
 
     await client.users.setPasswordCompromised(memberUser.id);
     await client.users.setPasswordCompromised(adminUser.id);

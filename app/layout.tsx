@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Karla } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "@/components/ui/sonner";
+import { ConfirmProvider } from "./components/ConfirmProvider";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -33,7 +35,8 @@ export default function RootLayout({
           afterSignOutUrl="/"
           taskUrls={{ "reset-password": "/session-tasks/reset-password" }}
         >
-          {children}
+          <ConfirmProvider>{children}</ConfirmProvider>
+          <Toaster position="top-right" richColors />
         </ClerkProvider>
       </body>
     </html>

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, {
@@ -10,6 +9,7 @@ import React, {
   ReactNode,
 } from "react";
 import { useUser, useOrganization } from "@clerk/nextjs";
+import { toast } from "sonner";
 import { User, Product, Category, SubCategory, Order } from "../types";
 
 interface AppContextType {
@@ -70,6 +70,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Failed to fetch catalog", error);
+      toast.error("Impossible de charger le catalogue.");
     }
   }, []);
 
@@ -160,63 +161,53 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Order Actions
   const addOrder = async (order: Omit<Order, "id" | "createdAt">) => {
-    try {
-      const apiBody = {
-        clientName: order.clientName,
-        pickupDate: order.pickupDate,
-        items: order.items.map((item) => ({
-          productId: item.product.id,
-          quantity: item.quantity,
-        })),
-      };
+    const apiBody = {
+      clientName: order.clientName,
+      pickupDate: order.pickupDate,
+      items: order.items.map((item) => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+      })),
+    };
 
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(apiBody),
-      });
+    const res = await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(apiBody),
+    });
 
-      if (res.ok) {
-        const newOrder = await res.json();
-        setOrders([...orders, newOrder]);
-        console.log("Order saved to DB:", newOrder);
-      } else {
-        console.error("Failed to save order");
-      }
-    } catch (error) {
-      console.error("Error saving order:", error);
+    if (!res.ok) {
+      throw new Error("Failed to save order");
     }
+
+    const newOrder = await res.json();
+    setOrders([...orders, newOrder]);
   };
 
   const updateOrder = async (
     id: string,
     order: Partial<Omit<Order, "id" | "createdAt">>
   ) => {
-    try {
-      const res = await fetch(`/api/orders/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientName: order.clientName,
-          pickupDate: order.pickupDate,
-          items: order.items?.map((item) => ({
-            id: item.id,
-            productId: item.product.id,
-            quantity: item.quantity,
-          })),
-        }),
-      });
+    const res = await fetch(`/api/orders/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        clientName: order.clientName,
+        pickupDate: order.pickupDate,
+        items: order.items?.map((item) => ({
+          id: item.id,
+          productId: item.product.id,
+          quantity: item.quantity,
+        })),
+      }),
+    });
 
-      if (res.ok) {
-        const updatedOrder = await res.json();
-        setOrders(orders.map((o) => (o.id === id ? updatedOrder : o)));
-        console.log("Order updated in DB:", updatedOrder);
-      } else {
-        console.error("Failed to update order");
-      }
-    } catch (error) {
-      console.error("Error updating order:", error);
+    if (!res.ok) {
+      throw new Error("Failed to update order");
     }
+
+    const updatedOrder = await res.json();
+    setOrders(orders.map((o) => (o.id === id ? updatedOrder : o)));
   };
 
   return (

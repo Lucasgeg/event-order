@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { Loader2 } from "lucide-react";
 
 export function cn(...classes: (string | false | null | undefined)[]) {
@@ -45,7 +46,7 @@ export function Button({
         "inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors duration-200 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap",
         buttonVariants[variant],
         buttonSizes[size],
-        className
+        className,
       )}
       disabled={disabled || loading}
       {...props}
@@ -81,7 +82,7 @@ export function IconButton({
         "inline-flex items-center justify-center h-9 w-9 rounded-lg transition-colors duration-200 cursor-pointer",
         "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-ink-soft",
         tones[tone],
-        className
+        className,
       )}
       {...props}
     >
@@ -140,7 +141,7 @@ export function Card({
     <div
       className={cn(
         "bg-surface rounded-xl border border-line shadow-sm",
-        className
+        className,
       )}
       {...props}
     >
@@ -193,7 +194,7 @@ export function Badge({
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold",
         tones[tone],
-        className
+        className,
       )}
     >
       {children}
@@ -215,17 +216,29 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center text-center py-12 px-4">
-      {icon && (
-        <div className="flex items-center justify-center h-12 w-12 rounded-full bg-parchment text-ink-soft mb-4">
-          {icon}
-        </div>
-      )}
-      <p className="font-semibold text-ink">{title}</p>
-      {description && (
-        <p className="mt-1 text-sm text-ink-soft max-w-sm">{description}</p>
-      )}
-      {action && <div className="mt-4">{action}</div>}
+    <div className="h-full relative">
+      <Image
+        src="/logo.png"
+        alt=""
+        aria-hidden
+        width={200}
+        height={200}
+        className="pointer-events-none absolute top-1/2 left-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 opacity-25"
+      />
+      <div className="relative flex flex-col items-center justify-center text-center py-12 px-4 overflow-hidden">
+        {icon && (
+          <div className="relative flex items-center justify-center h-12 w-12 rounded-full bg-parchment text-ink-soft mb-4">
+            {icon}
+          </div>
+        )}
+        <p className="relative font-semibold text-ink">{title}</p>
+        {description && (
+          <p className="relative mt-1 text-sm text-ink-soft max-w-sm">
+            {description}
+          </p>
+        )}
+        {action && <div className="relative mt-4">{action}</div>}
+      </div>
     </div>
   );
 }
@@ -251,7 +264,7 @@ export function Segmented<T extends string>({
             "h-9 px-4 rounded-md text-sm font-semibold transition-colors duration-200 cursor-pointer",
             value === option.value
               ? "bg-surface text-primary shadow-sm"
-              : "text-ink-soft hover:text-ink"
+              : "text-ink-soft hover:text-ink",
           )}
         >
           {option.label}
@@ -272,7 +285,7 @@ export function Th({
     <th
       className={cn(
         "px-4 py-3 text-left text-xs font-bold text-ink-soft uppercase tracking-wider",
-        className
+        className,
       )}
       {...props}
     >
@@ -297,8 +310,15 @@ export function Td({
 
 export function LoadingBlock({ label = "Chargement..." }: { label?: string }) {
   return (
-    <div className="flex items-center justify-center gap-3 py-12 text-ink-soft">
-      <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+    <div className="flex flex-col items-center justify-center gap-3 py-12 text-ink-soft">
+      <Image
+        src="/logo.png"
+        alt=""
+        aria-hidden
+        width={40}
+        height={40}
+        className="h-30 w-30 animate-pulse"
+      />
       <span className="text-sm font-medium">{label}</span>
     </div>
   );

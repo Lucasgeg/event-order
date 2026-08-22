@@ -19,7 +19,22 @@ async function main() {
 
   console.log(`Tenant created/found: ${tenant.id}`);
 
-  // 2. Create Categories and SubCategories
+  // 2. Nettoyage : on repart d'une base vierge pour ce tenant à chaque
+  // exécution, sinon catégories/produits se dupliquent à chaque relance.
+  // Ordre imposé par les contraintes de clé étrangère (Restrict par défaut
+  // sur Product -> Category/SubCategory et OrderItem -> Product) : les
+  // commandes (et leurs lignes, en cascade) doivent partir avant les
+  // produits, eux-mêmes avant les (sous-)catégories.
+  await prisma.order.deleteMany({ where: { tenantId: TENANT_ID } });
+  await prisma.product.deleteMany({ where: { tenantId: TENANT_ID } });
+  await prisma.subCategory.deleteMany({
+    where: { category: { tenantId: TENANT_ID } },
+  });
+  await prisma.category.deleteMany({ where: { tenantId: TENANT_ID } });
+
+  console.log("Cleared existing categories, products and orders for tenant");
+
+  // 3. Create Categories and SubCategories
   const categoriesData = [
     {
       name: "Pièces Cocktail",
@@ -59,7 +74,7 @@ async function main() {
 
   console.log(`Created ${createdCategories.length} categories`);
 
-  // 3. Create Products
+  // 4. Create Products
   const productsData = [
     // Pièces Cocktail
     {
@@ -138,7 +153,7 @@ async function main() {
 
   console.log(`Created ${createdProducts.length} products`);
 
-  // 4. Create Orders
+  // 5. Create Orders
   const clientNames = [
     "Jean Dupont",
     "Marie Martin",
@@ -152,8 +167,14 @@ async function main() {
     "Julie Michel",
   ];
 
-  const startDate = new Date("2026-01-15T00:00:00Z");
-  const endDate = new Date("2026-01-31T23:59:59Z");
+  // Dates relatives à "maintenant" (et pas calendaires fixes) pour que les
+  // commandes générées restent visibles dans les filtres upcoming/past de
+  // l'UI (respectivement +1 mois et -6 mois) quel que soit le jour où le
+  // seed est exécuté.
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 15);
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() + 15);
 
   for (let i = 0; i < 30; i++) {
     const randomClient =

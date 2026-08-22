@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import { toast } from "sonner";
 import { useApp } from "../../context/AppContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Product, OrderItem } from "../../types";
@@ -74,7 +74,6 @@ function UserPageContent() {
   const [clientName, setClientName] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [cart, setCart] = useState<OrderItem[]>([]);
-  const [loadingOrder, setLoadingOrder] = useState(false);
 
   // Navigation state
   const [view, setView] = useState<"categories" | "subcategories" | "products">(
@@ -98,7 +97,6 @@ function UserPageContent() {
   useEffect(() => {
     if (orderId) {
       const fetchOrder = async () => {
-        setLoadingOrder(true);
         try {
           const response = await fetch(`/api/orders/${orderId}`);
           if (response.ok) {
@@ -113,11 +111,12 @@ function UserPageContent() {
             // Note: We need to make sure products are loaded or we have full product info in order items
             // The API returns items with product included.
             setCart(order.items);
+          } else {
+            toast.error("Impossible de charger la commande à modifier.");
           }
         } catch (error) {
           console.error("Error fetching order:", error);
-        } finally {
-          setLoadingOrder(false);
+          toast.error("Impossible de charger la commande à modifier.");
         }
       };
       fetchOrder();
@@ -184,34 +183,43 @@ function UserPageContent() {
 
   const handleSaveOrder = async () => {
     if (!clientName || !selectedDate || cart.length === 0) {
-      alert(
+      toast.error(
         "Veuillez remplir le nom du client, la date et ajouter des produits."
       );
       return;
     }
 
-    if (orderId) {
-      await updateOrder(orderId, {
-        clientName,
-        items: cart,
-        pickupDate: selectedDate,
-      });
-      alert("Commande modifiée !");
-      router.push("/admin"); // Redirect back to admin after edit
-    } else {
-      await addOrder({
-        clientName,
-        items: cart,
-        pickupDate: selectedDate,
-      });
-      alert("Commande enregistrée !");
-      // Reset form
-      setClientName("");
-      setCart([]);
-      setSelectedDate("");
-      setView("categories");
-      setSelectedCategory(null);
-      setSelectedSubCategory(null);
+    try {
+      if (orderId) {
+        await updateOrder(orderId, {
+          clientName,
+          items: cart,
+          pickupDate: selectedDate,
+        });
+        toast.success("Commande modifiée !");
+        router.push("/admin"); // Redirect back to admin after edit
+      } else {
+        await addOrder({
+          clientName,
+          items: cart,
+          pickupDate: selectedDate,
+        });
+        toast.success("Commande enregistrée !");
+        // Reset form
+        setClientName("");
+        setCart([]);
+        setSelectedDate("");
+        setView("categories");
+        setSelectedCategory(null);
+        setSelectedSubCategory(null);
+      }
+    } catch (error) {
+      console.error("Error saving order:", error);
+      toast.error(
+        orderId
+          ? "Erreur lors de la modification de la commande."
+          : "Erreur lors de l'enregistrement de la commande."
+      );
     }
   };
 

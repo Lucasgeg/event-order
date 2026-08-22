@@ -2,7 +2,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { useApp } from "../../context/AppContext";
+import { useConfirm } from "../../components/ConfirmProvider";
 import { useRouter } from "next/navigation";
 import { Product, Category, Order } from "../../types";
 import { UserButton } from "@clerk/nextjs";
@@ -111,7 +113,6 @@ export default function AdminPage() {
       }
     }
   }, [user, isLoading, router]);
-
   if (isLoading || !user || user.role !== "admin") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-cream">
@@ -125,8 +126,8 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-cream">
       {/* Sidebar (desktop) */}
-      <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-64 bg-surface border-r border-line z-40">
-        <div className="flex items-center gap-3 px-5 h-16 border-b border-line">
+      <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-64 bg-surface border-r border-line z-40 overflow-hidden">
+        <div className="relative flex items-center gap-3 px-5 h-16 border-b border-line">
           <Image
             src="/logo.png"
             alt="Logo Cahier du Chef"
@@ -139,7 +140,10 @@ export default function AdminPage() {
           </span>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1" aria-label="Navigation principale">
+        <nav
+          className="relative flex-1 px-3 py-4 space-y-1"
+          aria-label="Navigation principale"
+        >
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.key;
@@ -152,13 +156,13 @@ export default function AdminPage() {
                   "flex items-center gap-3 w-full h-11 px-3 rounded-lg text-sm font-semibold transition-colors duration-200 cursor-pointer",
                   isActive
                     ? "bg-gold-soft text-primary"
-                    : "text-ink-soft hover:bg-parchment hover:text-ink"
+                    : "text-ink-soft hover:bg-parchment hover:text-ink",
                 )}
               >
                 <Icon
                   className={cn(
                     "h-5 w-5",
-                    isActive ? "text-gold-dark" : "text-ink-soft"
+                    isActive ? "text-gold-dark" : "text-ink-soft",
                   )}
                 />
                 {item.label}
@@ -166,7 +170,16 @@ export default function AdminPage() {
             );
           })}
         </nav>
-
+        <div className="flex justify-center items-center">
+          <Image
+            src="/logo.png"
+            alt=""
+            aria-hidden
+            width={220}
+            height={220}
+            className="pointer-events-none"
+          />
+        </div>
         <div className="px-3 py-4 border-t border-line space-y-3">
           <button
             onClick={() => router.push("/user")}
@@ -224,7 +237,7 @@ export default function AdminPage() {
                   "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors duration-200 cursor-pointer",
                   isActive
                     ? "bg-gold-soft text-primary"
-                    : "text-ink-soft hover:bg-parchment"
+                    : "text-ink-soft hover:bg-parchment",
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -300,11 +313,11 @@ function CategoriesManager({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
-    null
+    null,
   );
   const [editingCategoryName, setEditingCategoryName] = useState("");
   const [showAutoGeneration, setShowAutoGeneration] = useState(
-    categories.length === 0
+    categories.length === 0,
   );
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -331,16 +344,14 @@ function CategoriesManager({
 
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        throw new Error(
-          data?.error || "Erreur lors de la génération du menu."
-        );
+        throw new Error(data?.error || "Erreur lors de la génération du menu.");
       }
     } catch (error) {
       console.error("Erreur lors de la génération:", error);
       setGenerationError(
         error instanceof Error
           ? error.message
-          : "Erreur lors de la génération du menu."
+          : "Erreur lors de la génération du menu.",
       );
     } finally {
       setIsGenerating(false);
@@ -505,7 +516,10 @@ function CategoriesManager({
                       >
                         <Check className="h-4 w-4" />
                       </IconButton>
-                      <IconButton label="Annuler" onClick={cancelEditingCategory}>
+                      <IconButton
+                        label="Annuler"
+                        onClick={cancelEditingCategory}
+                      >
                         <X className="h-4 w-4" />
                       </IconButton>
                     </div>
@@ -607,6 +621,7 @@ function ProductsManager({
   updateProduct,
   deleteProduct,
 }: any) {
+  const confirmAction = useConfirm();
   const [newProduct, setNewProduct] = useState<Partial<Product>>({});
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Product>>({});
@@ -641,15 +656,28 @@ function ProductsManager({
   };
 
   const handleDeleteProduct = async (productId: string) => {
+    const confirmed = await confirmAction({
+      title: "Supprimer ce produit ?",
+      description:
+        "Cette action est irréversible si le produit n'a jamais été commandé.",
+      confirmLabel: "Supprimer",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+
     try {
       const { action } = await deleteProduct(productId);
       if (action === "deactivated") {
-        alert(
-          "Ce produit a déjà été commandé, il ne peut pas être supprimé : il a été désactivé et n'apparaîtra plus dans le catalogue."
+        toast.info(
+          "Ce produit a déjà été commandé, il ne peut pas être supprimé : il a été désactivé et n'apparaîtra plus dans le catalogue.",
         );
+      } else {
+        toast.success("Produit supprimé.");
       }
     } catch {
-      alert("Erreur lors de la suppression du produit. Réessayez ou contactez le support.");
+      toast.error(
+        "Erreur lors de la suppression du produit. Réessayez ou contactez le support.",
+      );
     }
   };
 
@@ -671,7 +699,7 @@ function ProductsManager({
   };
 
   const filteredProducts = products.filter((product: Product) =>
-    product.designation.toLowerCase().includes(searchQuery.toLowerCase())
+    product.designation.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -779,10 +807,10 @@ function ProductsManager({
               {filteredProducts.map((product: Product) => {
                 const isEditing = editingProductId === product.id;
                 const category = categories.find(
-                  (c: Category) => c.id === product.categoryId
+                  (c: Category) => c.id === product.categoryId,
                 );
                 const subCategory = subCategories.find(
-                  (s: any) => s.id === product.subCategoryId
+                  (s: any) => s.id === product.subCategoryId,
                 );
 
                 if (isEditing) {
@@ -862,7 +890,7 @@ function ProductsManager({
                           {subCategories
                             .filter(
                               (sub: any) =>
-                                sub.categoryId === editFormData.categoryId
+                                sub.categoryId === editFormData.categoryId,
                             )
                             .map((sub: any) => (
                               <option key={sub.id} value={sub.id}>
@@ -915,7 +943,7 @@ function ProductsManager({
                         }`}
                         className={cn(
                           "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out",
-                          product.isActive !== false ? "bg-olive" : "bg-line"
+                          product.isActive !== false ? "bg-olive" : "bg-line",
                         )}
                       >
                         <span
@@ -924,7 +952,7 @@ function ProductsManager({
                             "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out",
                             product.isActive !== false
                               ? "translate-x-5"
-                              : "translate-x-0"
+                              : "translate-x-0",
                           )}
                         />
                       </button>
@@ -1006,6 +1034,7 @@ function ProductionManager({
         }
       } catch (error) {
         console.error("Error fetching orders:", error);
+        toast.error("Impossible de charger les commandes.");
       } finally {
         setLoading(false);
       }
@@ -1033,10 +1062,10 @@ function ProductionManager({
         current.quantity += item.quantity;
       } else {
         const category = categories.find(
-          (c) => c.id === item.product.categoryId
+          (c) => c.id === item.product.categoryId,
         );
         const subCategory = subCategories.find(
-          (s) => s.id === item.product.subCategoryId
+          (s) => s.id === item.product.subCategoryId,
         );
 
         productQuantities.set(productId, {
@@ -1050,7 +1079,7 @@ function ProductionManager({
   });
 
   const aggregatedProducts = Array.from(productQuantities.values()).sort(
-    (a, b) => a.name.localeCompare(b.name)
+    (a, b) => a.name.localeCompare(b.name),
   );
 
   // Group by category
@@ -1063,7 +1092,7 @@ function ProductionManager({
       acc[category].push(product);
       return acc;
     },
-    {} as Record<string, typeof aggregatedProducts>
+    {} as Record<string, typeof aggregatedProducts>,
   );
 
   const sortedCategories = Object.keys(productsByCategory).sort();
@@ -1189,7 +1218,7 @@ function ProductionManager({
                       onChange={(e) => {
                         if (e.target.checked) {
                           setHiddenCategories(
-                            hiddenCategories.filter((c) => c !== category)
+                            hiddenCategories.filter((c) => c !== category),
                           );
                         } else {
                           setHiddenCategories([...hiddenCategories, category]);
@@ -1209,7 +1238,7 @@ function ProductionManager({
               {mode === "single"
                 ? `pour le ${new Date(selectedDate).toLocaleDateString()}`
                 : `du ${new Date(startDate).toLocaleDateString()} au ${new Date(
-                    endDate
+                    endDate,
                   ).toLocaleDateString()}`}
             </h3>
 
@@ -1267,11 +1296,12 @@ function ProductionManager({
 }
 
 function MembersManager() {
+  const confirmAction = useConfirm();
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"org:member" | "org:admin">(
-    "org:member"
+    "org:member",
   );
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -1286,6 +1316,7 @@ function MembersManager() {
       }
     } catch (e) {
       console.error(e);
+      toast.error("Impossible de charger les membres.");
     } finally {
       setLoading(false);
     }
@@ -1326,7 +1357,14 @@ function MembersManager() {
   };
 
   const handleRemove = async (userId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce membre ?")) return;
+    const confirmed = await confirmAction({
+      title: "Supprimer ce membre ?",
+      description: "Cette action est irréversible.",
+      confirmLabel: "Supprimer",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+
     try {
       const res = await fetch("/api/members", {
         method: "DELETE",
@@ -1334,13 +1372,14 @@ function MembersManager() {
         body: JSON.stringify({ userId }),
       });
       if (res.ok) {
+        toast.success("Membre supprimé.");
         fetchMembers();
       } else {
         const data = await res.json();
-        alert(data.error);
+        toast.error(data.error || "Erreur lors de la suppression.");
       }
-    } catch (e) {
-      alert("Erreur lors de la suppression.");
+    } catch {
+      toast.error("Erreur lors de la suppression.");
     }
   };
 

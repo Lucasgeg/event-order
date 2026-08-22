@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/app/context/AppContext";
+import { useConfirm } from "@/app/components/ConfirmProvider";
 import { Order } from "@/app/types";
 import {
   ClipboardList,
@@ -27,6 +29,7 @@ import {
 
 export function OrdersManager() {
   const { user } = useApp();
+  const confirmAction = useConfirm();
   // L'API refuse PUT/DELETE aux non-admins ; ici on ne fait que refléter la règle
   const canEdit = user?.role === "admin";
 
@@ -63,6 +66,7 @@ export function OrdersManager() {
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
+      toast.error("Impossible de charger les commandes.");
     } finally {
       setLoading(false);
     }
@@ -76,6 +80,30 @@ export function OrdersManager() {
   const handleSearch = () => {
     setPage(1);
     fetchOrders(1, searchQuery, activeTab);
+  };
+
+  const handleDeleteOrder = async (order: Order) => {
+    const confirmed = await confirmAction({
+      title: "Supprimer cette commande ?",
+      description: `La commande de ${order.clientName} sera définitivement supprimée.`,
+      confirmLabel: "Supprimer",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/orders/${order.id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete order");
+      }
+      toast.success("Commande supprimée.");
+      fetchOrders(page, searchQuery);
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      toast.error("Erreur lors de la suppression de la commande.");
+    }
   };
 
   const handlePageChange = (newPage: number) => {
@@ -217,15 +245,7 @@ export function OrdersManager() {
                             }
                             tone="danger"
                             disabled={!canEdit}
-                            onClick={() => {
-                              if (
-                                confirm("Voulez-vous supprimer cette commande ?")
-                              ) {
-                                fetch(`/api/orders/${order.id}`, {
-                                  method: "DELETE",
-                                }).then(() => fetchOrders(page, searchQuery));
-                              }
-                            }}
+                            onClick={() => handleDeleteOrder(order)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </IconButton>

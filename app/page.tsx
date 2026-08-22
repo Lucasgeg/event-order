@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
+import { auth } from "@clerk/nextjs/server";
 import JobTitleRotator from "./components/JobTitleRotator";
 import ClickableImage from "./components/ClickableImage";
 import {
@@ -28,7 +29,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const { userId } = await auth();
+
   return (
     <div className="min-h-screen bg-cream">
       {/* Navigation */}
@@ -54,18 +57,29 @@ export default function LandingPage() {
               >
                 À propos
               </Link>
-              <Link
-                href="/login"
-                className="text-ink-soft hover:text-ink font-medium transition-colors"
-              >
-                Se connecter
-              </Link>
-              <Link
-                href="/inscription"
-                className="inline-flex items-center h-10 px-4 rounded-lg bg-primary text-white font-semibold hover:bg-primary-dark transition-colors"
-              >
-                Commencer
-              </Link>
+              {userId ? (
+                <Link
+                  href="/admin"
+                  className="inline-flex items-center h-10 px-4 rounded-lg bg-primary text-white font-semibold hover:bg-primary-dark transition-colors"
+                >
+                  Accéder à l&apos;application
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="text-ink-soft hover:text-ink font-medium transition-colors"
+                  >
+                    Se connecter
+                  </Link>
+                  <Link
+                    href="/inscription"
+                    className="inline-flex items-center h-10 px-4 rounded-lg bg-primary text-white font-semibold hover:bg-primary-dark transition-colors"
+                  >
+                    Commencer
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -91,10 +105,10 @@ export default function LandingPage() {
               </p>
               <div className="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
                 <Link
-                  href="/inscription"
+                  href={userId ? "/admin" : "/inscription"}
                   className="inline-flex items-center justify-center h-13 px-8 py-3.5 rounded-lg text-base font-semibold text-white bg-primary hover:bg-primary-dark md:text-lg md:px-10 transition-all shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25"
                 >
-                  Démarrer maintenant
+                  {userId ? "Accéder à l'application" : "Démarrer maintenant"}
                   <ArrowRight className="ml-2 h-5 w-5" aria-hidden />
                 </Link>
               </div>
@@ -282,10 +296,10 @@ export default function LandingPage() {
             Cahier du Chef.
           </p>
           <Link
-            href="/inscription"
+            href={userId ? "/admin" : "/inscription"}
             className="mt-8 w-full inline-flex items-center justify-center h-12 px-6 rounded-lg text-base font-semibold text-primary bg-white hover:bg-gold-soft sm:w-auto transition-colors"
           >
-            Créer mon compte gratuitement
+            {userId ? "Accéder à l'application" : "Créer mon compte gratuitement"}
           </Link>
         </div>
       </div>

@@ -29,7 +29,12 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${playfair.variable} ${karla.variable}`}>
       <body className="antialiased bg-cream text-ink font-sans">
-        <ClerkProvider afterSignOutUrl="/">{children}</ClerkProvider>
+        <ClerkProvider
+          afterSignOutUrl="/"
+          taskUrls={{ "reset-password": "/session-tasks/reset-password" }}
+        >
+          {children}
+        </ClerkProvider>
       </body>
     </html>
   );

@@ -7,22 +7,6 @@ import { prisma } from "@/lib/prisma";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Helper to generate a strong password
-function generatePassword(length = 16) {
-  const charset =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
-  let password = "";
-  for (let i = 0; i < length; i++) {
-    password += charset.charAt(Math.floor(Math.random() * charset.length));
-  }
-  // Ensure at least one of each type
-  if (!/[a-z]/.test(password)) password += "a";
-  if (!/[A-Z]/.test(password)) password += "A";
-  if (!/[0-9]/.test(password)) password += "1";
-  if (!/[^a-zA-Z0-9]/.test(password)) password += "!";
-  return password;
-}
-
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -34,6 +18,8 @@ export async function POST(req: Request) {
       adminLastName,
       memberFirstName,
       memberLastName,
+      adminPassword,
+      memberPassword,
     } = body;
 
     if (
@@ -43,7 +29,9 @@ export async function POST(req: Request) {
       !adminFirstName ||
       !adminLastName ||
       !memberFirstName ||
-      !memberLastName
+      !memberLastName ||
+      !adminPassword ||
+      !memberPassword
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -63,10 +51,6 @@ export async function POST(req: Request) {
 
     const client = await clerkClient();
 
-    // 1. Generate passwords
-    const adminPassword = generatePassword();
-    const memberPassword = generatePassword();
-
     // 2. Create Admin User
     let adminUser;
     try {
@@ -79,9 +63,8 @@ export async function POST(req: Request) {
         skipPasswordRequirement: false,
       });
     } catch (e: any) {
-      // If user already exists, we might want to find them, but for this specific requirement
-      // of generating a password and sending it, it implies new users.
-      // We'll return an error if they exist.
+      // If the user already exists, we return an error rather than trying to
+      // reuse/reset their account — this endpoint only creates new users.
       return NextResponse.json(
         { error: `Error creating admin user: ${e.message}` },
         { status: 400 }
@@ -162,9 +145,6 @@ export async function POST(req: Request) {
       );
     }
 
-    await client.users.setPasswordCompromised(memberUser.id);
-    await client.users.setPasswordCompromised(adminUser.id);
-
     // 6. Send Emails
     if (process.env.RESEND_API_KEY) {
       try {
@@ -175,7 +155,6 @@ export async function POST(req: Request) {
             subject: "Bienvenue sur Cahier du Chef",
             react: WelcomeEmail({
               email: adminEmail,
-              password: adminPassword,
               role: "Admin",
             }),
           },
@@ -185,7 +164,6 @@ export async function POST(req: Request) {
             subject: "Bienvenue sur Cahier du Chef",
             react: WelcomeEmail({
               email: memberEmail,
-              password: memberPassword,
               role: "Membre",
             }),
           },
@@ -194,9 +172,7 @@ export async function POST(req: Request) {
         console.error("Error sending emails:", error);
       }
     } else {
-      console.log("RESEND_API_KEY not configured. Logging credentials:");
-      console.log(`To Admin: ${adminEmail} / ${adminPassword}`);
-      console.log(`To Member: ${memberEmail} / ${memberPassword}`);
+      console.log("RESEND_API_KEY not configured. Skipping welcome emails.");
     }
 
     return NextResponse.json({

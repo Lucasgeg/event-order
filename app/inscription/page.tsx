@@ -13,9 +13,13 @@ export default function RegistrationPage() {
     adminFirstName: "",
     adminLastName: "",
     adminEmail: "",
+    adminPassword: "",
+    adminConfirmPassword: "",
     memberFirstName: "",
     memberLastName: "",
     memberEmail: "",
+    memberPassword: "",
+    memberConfirmPassword: "",
     promoCode: "",
   });
 
@@ -41,15 +45,39 @@ export default function RegistrationPage() {
       return;
     }
 
+    if (formData.adminPassword !== formData.adminConfirmPassword) {
+      setError(
+        "Les deux mots de passe de l'administrateur ne correspondent pas."
+      );
+      return;
+    }
+
+    if (formData.memberPassword !== formData.memberConfirmPassword) {
+      setError("Les deux mots de passe du membre ne correspondent pas.");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      const payload = {
+        organisationName: formData.organisationName,
+        adminFirstName: formData.adminFirstName,
+        adminLastName: formData.adminLastName,
+        adminEmail: formData.adminEmail,
+        adminPassword: formData.adminPassword,
+        memberFirstName: formData.memberFirstName,
+        memberLastName: formData.memberLastName,
+        memberEmail: formData.memberEmail,
+        memberPassword: formData.memberPassword,
+        promoCode: formData.promoCode,
+      };
       const response = await fetch("/api/public/create-organization", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -83,9 +111,8 @@ export default function RegistrationPage() {
               Inscription réussie !
             </h2>
             <p className="text-ink-soft mb-8">
-              Votre organisation a été créée avec succès. Des emails contenant
-              les informations de connexion ont été envoyés à
-              l&apos;administrateur et au membre.
+              Votre organisation a été créée avec succès. Un email de
+              bienvenue a été envoyé à l&apos;administrateur et au membre.
             </p>
             <Link
               href="/login"
@@ -187,6 +214,34 @@ export default function RegistrationPage() {
                     onChange={handleChange}
                   />
                 </div>
+
+                <div>
+                  <Label htmlFor="adminPassword">Mot de passe</Label>
+                  <Input
+                    id="adminPassword"
+                    name="adminPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    value={formData.adminPassword}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="adminConfirmPassword">
+                    Confirmer le mot de passe
+                  </Label>
+                  <Input
+                    id="adminConfirmPassword"
+                    name="adminConfirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    value={formData.adminConfirmPassword}
+                    onChange={handleChange}
+                  />
+                </div>
               </div>
             </fieldset>
 
@@ -227,6 +282,34 @@ export default function RegistrationPage() {
                     type="email"
                     required
                     value={formData.memberEmail}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="memberPassword">Mot de passe</Label>
+                  <Input
+                    id="memberPassword"
+                    name="memberPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    value={formData.memberPassword}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="memberConfirmPassword">
+                    Confirmer le mot de passe
+                  </Label>
+                  <Input
+                    id="memberConfirmPassword"
+                    name="memberConfirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    value={formData.memberConfirmPassword}
                     onChange={handleChange}
                   />
                 </div>

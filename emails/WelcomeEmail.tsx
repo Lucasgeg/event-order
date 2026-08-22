@@ -13,23 +13,19 @@ import * as React from "react";
 
 interface WelcomeEmailProps {
   email: string;
-  password?: string;
   role: string;
   loginUrl?: string;
 }
 
 export const WelcomeEmail = ({
   email,
-  password,
   role,
   loginUrl = "https://event-order.vercel.app", // Default URL, should be env var in prod
 }: WelcomeEmailProps) => {
   return (
     <Html>
       <Head />
-      <Preview>
-        Bienvenue sur Cahier du Chef - Vos identifiants de connexion
-      </Preview>
+      <Preview>Bienvenue sur Cahier du Chef</Preview>
       <Tailwind>
         <Body className="bg-white my-auto mx-auto font-sans">
           <Container className="border border-solid border-[#eaeaea] rounded my-10 mx-auto p-5 w-116.25">
@@ -44,15 +40,10 @@ export const WelcomeEmail = ({
               <Text className="text-black text-[14px] leading-6 m-0">
                 <strong>Email :</strong> {email}
               </Text>
-              {password && (
-                <Text className="text-black text-[14px] leading-6 m-0 mt-2">
-                  <strong>Mot de passe temporaire :</strong> {password}
-                </Text>
-              )}
             </Section>
             <Text className="text-black text-[14px] leading-6">
-              Pour des raisons de sécurité, il vous sera demandé de changer
-              votre mot de passe dès votre première connexion.
+              Le mot de passe de votre compte vous a été communiqué
+              séparément par la personne qui a créé votre organisation.
             </Text>
             <Section className="text-center my-8">
               <a

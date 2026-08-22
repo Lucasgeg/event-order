@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useEffect, useState } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useSession } from "@clerk/nextjs";
 import { useSignIn } from "@clerk/nextjs/legacy";
 import { useRouter } from "next/navigation";
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
@@ -12,6 +12,7 @@ import { Button, Input, Label, LoadingBlock } from "../components/ui";
 
 export default function LoginPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
+  const { session } = useSession();
   const router = useRouter();
   const { orgRole } = useAuth();
   useEffect(() => {
@@ -31,6 +32,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -55,14 +57,23 @@ export default function LoginPage() {
         password,
       });
       if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
+        await setActive({
+          session: result.createdSessionId,
+          navigate: async ({ session }) => {
+            if (session?.currentTask?.key === "reset-password") {
+              router.push("/session-tasks/reset-password");
+            }
+            // Sinon : rien à faire, le useEffect sur orgRole redirige déjà
+            // vers /admin ou /user une fois la session pleinement active.
+          },
+        });
       } else if (
         result.status === "needs_second_factor" ||
         result.status === "needs_client_trust"
       ) {
         // Check if email_code is supported
         const isEmailCodeSupported = result.supportedSecondFactors?.some(
-          (f) => f.strategy === "email_code"
+          (f) => f.strategy === "email_code",
         );
         if (isEmailCodeSupported) {
           // Prepare the second factor
@@ -72,7 +83,7 @@ export default function LoginPage() {
           setPassword("");
         } else {
           setError(
-            "Méthode d'authentification à deux facteurs non supportée (Email requis)."
+            "Méthode d'authentification à deux facteurs non supportée (Email requis).",
           );
         }
       } else {
@@ -80,6 +91,7 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error("SignIn error:", err);
+      console.log("session:", session);
       if (isClerkAPIResponseError(err)) {
         const msg = err.errors[0]?.longMessage || "Une erreur est survenue.";
         setError(msg);
@@ -113,7 +125,7 @@ export default function LoginPage() {
       if (isClerkAPIResponseError(err)) {
         setError(
           err.errors[0]?.longMessage ||
-            "Erreur lors de la vérification du code."
+            "Erreur lors de la vérification du code.",
         );
       } else {
         setError("Erreur lors de la vérification du code.");
@@ -143,7 +155,7 @@ export default function LoginPage() {
       console.error("ForgotPassword error:", err);
       if (isClerkAPIResponseError(err)) {
         setError(
-          err.errors[0]?.longMessage || "Erreur lors de l'envoi du code."
+          err.errors[0]?.longMessage || "Erreur lors de l'envoi du code.",
         );
       } else {
         setError("Erreur lors de l'envoi du code.");
@@ -155,8 +167,14 @@ export default function LoginPage() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+
+    if (newPassword !== confirmNewPassword) {
+      setError("Les deux mots de passe ne correspondent pas.");
+      return;
+    }
+
+    setLoading(true);
     try {
       const result = await signIn
         .attemptFirstFactor({
@@ -170,7 +188,7 @@ export default function LoginPage() {
             result.status === "needs_client_trust"
           ) {
             const isEmailCodeSupported = result.supportedSecondFactors?.some(
-              (f) => f.strategy === "email_code"
+              (f) => f.strategy === "email_code",
             );
             if (isEmailCodeSupported) {
               await signIn.prepareSecondFactor({ strategy: "email_code" });
@@ -178,7 +196,7 @@ export default function LoginPage() {
               setPassword("");
             } else {
               setError(
-                "Méthode d'authentification à deux facteurs non supportée (Email requis)."
+                "Méthode d'authentification à deux facteurs non supportée (Email requis).",
               );
             }
           }
@@ -187,14 +205,11 @@ export default function LoginPage() {
             await setActive({
               session: result.createdSessionId,
               navigate: async ({ session }) => {
-                if (session?.currentTask) {
-                  // Check for tasks and navigate to custom UI to help users resolve them
-                  // See https://clerk.com/docs/guides/development/custom-flows/overview#session-tasks
-                  console.log(session?.currentTask);
-                  return;
+                if (session?.currentTask?.key === "reset-password") {
+                  router.push("/session-tasks/reset-password");
                 }
-
-                router.push("/");
+                // Sinon : rien à faire, le useEffect sur orgRole redirige déjà
+                // vers /admin ou /user une fois la session pleinement active.
               },
             });
           }
@@ -203,7 +218,7 @@ export default function LoginPage() {
       console.error("ResetPassword error:", err);
       if (isClerkAPIResponseError(err)) {
         setError(
-          err.errors[0]?.longMessage || "Erreur lors de la réinitialisation."
+          err.errors[0]?.longMessage || "Erreur lors de la réinitialisation.",
         );
       } else {
         setError("Erreur lors de la réinitialisation.");
@@ -392,6 +407,20 @@ export default function LoginPage() {
                   required
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="confirm-new-password">
+                  Confirmer le mot de passe
+                </Label>
+                <Input
+                  id="confirm-new-password"
+                  name="confirmNewPassword"
+                  type="password"
+                  required
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
                 />
               </div>
 

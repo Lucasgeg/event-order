@@ -4,34 +4,6 @@
 > limitations assumées vivent dans `docs/adr/` ; l'historique des corrections
 > est dans git.
 
-## Bugs
-
-### Le mot de passe temporaire "compromis" n'est jamais vraiment réinitialisé
-
-- **Symptôme** : à l'inscription, `setPasswordCompromised` est appelé sur les
-  comptes admin et membre (`app/api/public/create-organization/route.ts`),
-  mais rien n'oblige l'utilisateur à changer son mot de passe temporaire à la
-  première connexion — il se connecte normalement et atterrit directement sur
-  `/admin` ou `/user`.
-- **Cause** : Clerk gère ce cas via une *session task* `reset-password`
-  attachée à la session (le compte n'a pas d'autre méthode de connexion que
-  email + mot de passe). `app/login/page.tsx` doit détecter cette tâche en
-  attente (`session?.currentTask?.key === "reset-password"`) et rediriger vers
-  un écran de réinitialisation obligatoire avant de laisser passer — ce check
-  n'existe que dans `handleResetPassword` (et y est un stub qui ne fait qu'un
-  `console.log`), pas du tout dans `handleSignIn`, qui appelle `setActive`
-  sans jamais regarder `session?.currentTask`.
-- **Reste à faire** :
-  1. Vérifier que l'instance Clerk du projet supporte bien la "Reset password
-     session task" (fonctionnalité de déc. 2025 sur certaines instances).
-  2. Déclarer `taskUrls={{ "reset-password": "/session-tasks/reset-password" }}`
-     sur le `<ClerkProvider>`.
-  3. Dans `handleSignIn`, passer un callback `navigate` à `setActive` qui
-     redirige vers cet écran si `session?.currentTask?.key === "reset-password"`
-     au lieu de continuer vers `/admin`/`/user`.
-  4. Construire l'écran de réinitialisation forcée (composant `<TaskResetPassword />`
-     de Clerk, ou équivalent custom cohérent avec le reste du flow de login).
-
 ## Qualité / dette
 
 ### `createRouteMatcher` déprécié côté Clerk
@@ -44,14 +16,6 @@ dans `proxy.ts` (matching par chemin, qui peut diverger du routing réel de
 Next.js). Pas urgent (fonctionne encore), mais `proxy.ts` (routes `/admin`,
 `/user`, `/commandes`) et ce pattern devront être migrés avant le prochain
 major de Clerk. Guide : https://clerk.com/docs/guides/development/upgrading/upgrade-guides/migrate-from-create-route-matcher
-
-### Pas de confirmation de saisie sur le nouveau mot de passe
-
-Le formulaire de réinitialisation (`app/login/page.tsx`, vue `reset-password`,
-champ `newPassword` autour de la ligne 384) n'a qu'un seul champ mot de passe.
-Ajouter un second input "confirmer le mot de passe" et bloquer la soumission
-tant que les deux ne correspondent pas, pour éviter qu'une faute de frappe
-verrouille l'utilisateur hors de son compte.
 
 ### Retours d'erreur invisibles pour l'utilisateur
 
@@ -78,6 +42,20 @@ redevienne un signal fiable.
   inutile en tête de ce même fichier.
 - Prisma 7.2.0 → 7.8.0 disponible (mise à jour mineure à planifier).
 
+### Vérification si l'email du membre correspond à un compte existant
+
+`api/public/create-organization` vérifie que `adminEmail` et `memberEmail`
+sont différents, mais ne vérifie pas si l'email du **membre** correspond déjà
+à un compte Clerk existant avant d'appeler `client.users.createUser(...)`
+(contrairement à l'admin, dont la création échoue proprement en premier, sans
+rien avoir créé). Si le membre a déjà un compte, l'erreur survient dans le
+bloc qui déclenche le rollback (organisation + admin supprimés) : pas de
+données orphelines, mais l'admin fraîchement créé saute aussi et
+l'inscription entière échoue avec un message Clerk brut, sans cause claire
+pour l'utilisateur. À vérifier explicitement en amont (comme pour
+`adminEmail`) et décider du comportement voulu si le membre a déjà un compte
+ailleurs.
+
 ### Pas de suite de tests
 
 Aucun test automatisé. Les invariants qui le mériteraient en premier :
@@ -86,6 +64,26 @@ et figeage du prix/nom (`unitPrice`, `designation`) à la création et à
 l'édition d'une commande.
 
 ## Évolutions prévues
+
+- **Inscription : l'admin choisit les deux mots de passe (dette assumée)** :
+  `api/public/create-organization` faisait générer un mot de passe aléatoire
+  par compte et le marquait compromis (`setPasswordCompromised`) pour forcer
+  un changement au premier login — mécanisme qui s'est révélé bugué (double
+  changement de mot de passe requis, sessions Clerk `pending` mal
+  synchronisées côté client, cf. historique git autour de
+  `app/session-tasks/reset-password/page.tsx`). Choix fait pour le MVP :
+  l'administrateur saisit lui-même le mot de passe du compte admin **et**
+  celui du compte membre dans le formulaire d'inscription ; plus de mot de
+  passe généré, plus de flag compromis, plus de reset forcé. L'exposition
+  (l'admin connaît en permanence le mot de passe du membre) est assumée
+  volontairement, à revoir après le MVP. Piste retenue pour la suite : garder
+  la saisie directe pour l'admin (fondateur de l'organisation, pas de
+  mécanisme Clerk permettant d'inviter quelqu'un à créer une organisation qui
+  n'existe pas encore), mais faire passer le **membre** par une invitation
+  Clerk (`client.organizations.createOrganizationInvitation` +
+  `/accept-invitation`, déjà utilisé pour inviter des membres depuis
+  l'admin) — il définirait alors son propre mot de passe, sans que
+  personne d'autre ne le connaisse.
 
 - **Élévation par code PIN admin** : débloquer ponctuellement l'édition d'une
   commande sur la tablette d'un membre. Les contraintes de conception sont

@@ -1,33 +1,18 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-const isLoginPage = createRouteMatcher(["/login", "/inscription"]);
-const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
-const isProtectedRoute = createRouteMatcher([
-  "/admin(.*)",
-  "/user(.*)",
-  "/commandes(.*)",
-]);
+const LOGIN_PATHS = new Set(["/login", "/inscription"]);
 
 export default clerkMiddleware(
   async (auth, req) => {
     const { userId, orgRole } = await auth();
 
     // Redirect authenticated users from the login page
-    if (userId && isLoginPage(req)) {
+    if (userId && LOGIN_PATHS.has(req.nextUrl.pathname)) {
       if (orgRole === "org:admin") {
         return NextResponse.redirect(new URL("/admin", req.url));
       }
       return NextResponse.redirect(new URL("/user", req.url));
-    }
-
-    // Protect authenticated routes
-    if (isProtectedRoute(req)) {
-      await auth.protect();
-
-      if (isAdminRoute(req) && orgRole !== "org:admin") {
-        return NextResponse.redirect(new URL("/", req.url));
-      }
     }
   },
   { signInUrl: "/login", signUpUrl: "/login" }

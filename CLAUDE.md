@@ -52,14 +52,14 @@ When adding queries or mutations, you **must** scope by `tenantId: orgId` or you
 
 ### Notable flows
 - **Onboarding** (`api/public/create-organization`): provisions two Clerk users (admin + member) with generated passwords, creates the Clerk org, creates the matching `Tenant` + `TenantMember` rows, marks both passwords compromised (forces reset on first login), and emails credentials via **Resend** (`emails/WelcomeEmail.tsx`, react-email). Falls back to console-logging credentials if `RESEND_API_KEY` is unset.
-- **Menu import** (`api/generate-menu`): upload PDF/image/text → OCR via ocr.space (PDFs split into 3-page chunks with `pdf-lib`) → Perplexity `sonar` model with a strict JSON prompt → parse → bulk-insert Categories/SubCategories/Products for the tenant.
+- **Menu import** (`api/generate-menu`): upload PDF/image/text → OCR via ocr.space (PDFs split into 3-page chunks with `pdf-lib`) → Gemini (`@google/genai`, model configurable via `GEMINI_MODEL`, defaults to `gemini-3.6-flash`) with a strict JSON prompt → parse → bulk-insert Categories/SubCategories/Products for the tenant.
 - **Members** (`api/members`): admin invites via Clerk org invitations (hard cap of 4 members), redirecting to `/accept-invitation`.
 
 ## Conventions
 
 - Path alias `@/*` → repo root (e.g. `@/lib/prisma`, `@/generated/prisma/client`, `@/emails/...`).
 - UI text and domain language are **French** ("commandes", "production", "catalogue"). Match it in user-facing strings.
-- Env vars: `DATABASE_URL`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_*`, `RESEND_API_KEY`, `OCR_API_KEY`, `PERPLEXITY_API_KEY`. Prisma loads env via `dotenv/config` in `prisma.config.ts`.
+- Env vars: `DATABASE_URL`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_*`, `RESEND_API_KEY`, `OCR_API_KEY`, `GEMINI_API_KEY` (optionally `GEMINI_MODEL`). Prisma loads env via `dotenv/config` in `prisma.config.ts`.
 - Icons: `lucide-react`. Styling: Tailwind CSS v4 (PostCSS plugin, no `tailwind.config` — configured in `app/globals.css`).
 - **Design system**: brand tokens live in `app/globals.css` `@theme` (palette "artisan" derived from the logo: `cream`, `parchment`, `ink`, `primary` brown, `gold`, `olive`, `danger`, `line` for borders). Use these semantic utilities (`bg-cream`, `text-ink`, `border-line`…), never raw Tailwind grays/blues. Fonts: Playfair Display (`font-display`, headings) + Karla (`font-sans`, body), loaded via `next/font` with variables on `<html>` in `app/layout.tsx` (they must stay on `<html>`, not `<body>`, or the `@theme` font tokens fail to resolve).
 - **Shared UI components**: `app/components/ui.tsx` (Button, IconButton, Input, Select, Label, Card, CardHeader, Badge, EmptyState, Segmented, Th/Td, LoadingBlock). Reuse them instead of hand-rolling Tailwind classes; primary usage target is tablet, so keep touch targets ≥ 44px (`h-11` default).

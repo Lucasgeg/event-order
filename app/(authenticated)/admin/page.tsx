@@ -298,6 +298,7 @@ function CategoriesManager({
   >(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
     null
   );
@@ -321,13 +322,26 @@ function CategoriesManager({
     formData.append("file", selectedFile);
 
     setIsGenerating(true);
+    setGenerationError(null);
     try {
-      await fetch("/api/generate-menu", {
+      const response = await fetch("/api/generate-menu", {
         method: "POST",
         body: formData,
       });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(
+          data?.error || "Erreur lors de la génération du menu."
+        );
+      }
     } catch (error) {
       console.error("Erreur lors de la génération:", error);
+      setGenerationError(
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la génération du menu."
+      );
     } finally {
       setIsGenerating(false);
       refreshData();
@@ -413,6 +427,14 @@ function CategoriesManager({
                 {isGenerating ? "Traitement..." : "Générer"}
               </Button>
             </div>
+            {generationError && (
+              <div
+                role="alert"
+                className="mt-4 bg-danger-soft border border-danger/20 text-danger px-4 py-3 rounded-lg text-sm"
+              >
+                {generationError}
+              </div>
+            )}
             <div className="mt-4 p-4 bg-gold-soft/60 border-l-4 border-gold rounded-r-lg text-ink">
               <p className="text-sm">
                 <span className="font-bold">Note importante :</span> La

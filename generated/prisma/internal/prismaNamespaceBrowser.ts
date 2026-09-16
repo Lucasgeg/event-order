@@ -52,7 +52,6 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Tenant: 'Tenant',
-  TenantMember: 'TenantMember',
   Category: 'Category',
   SubCategory: 'SubCategory',
   Product: 'Product',
@@ -80,20 +79,14 @@ export const TenantScalarFieldEnum = {
   id: 'id',
   name: 'name',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  pinCodeHash: 'pinCodeHash',
+  pinFailedAttempts: 'pinFailedAttempts',
+  pinLockedUntil: 'pinLockedUntil',
+  pinLockoutLevel: 'pinLockoutLevel'
 } as const
 
 export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
-
-
-export const TenantMemberScalarFieldEnum = {
-  id: 'id',
-  tenantId: 'tenantId',
-  userId: 'userId',
-  role: 'role'
-} as const
-
-export type TenantMemberScalarFieldEnum = (typeof TenantMemberScalarFieldEnum)[keyof typeof TenantMemberScalarFieldEnum]
 
 
 export const CategoryScalarFieldEnum = {

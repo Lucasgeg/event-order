@@ -45,11 +45,6 @@ export { Prisma }
  */
 export type Tenant = Prisma.TenantModel
 /**
- * Model TenantMember
- * 
- */
-export type TenantMember = Prisma.TenantMemberModel
-/**
  * Model Category
  * 
  */

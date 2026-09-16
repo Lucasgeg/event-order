@@ -14,17 +14,14 @@ export default function LoginPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
   const { session } = useSession();
   const router = useRouter();
-  const { orgRole } = useAuth();
+  const { orgId } = useAuth();
   useEffect(() => {
-    if (orgRole) {
-      if (orgRole === "org:admin") {
-        router.push("/admin");
-      }
-      if (orgRole === "org:user") {
-        router.push("/user");
-      }
+    // orgId n'est présent qu'une fois la session pleinement active
+    // (organisation chargée) — un seul compte, une seule destination.
+    if (orgId) {
+      router.push("/user");
     }
-  }, [orgRole, router]);
+  }, [orgId, router]);
   const [view, setView] = useState<
     "sign-in" | "forgot-password" | "reset-password" | "verify-2fa"
   >("sign-in");
@@ -63,8 +60,8 @@ export default function LoginPage() {
             if (session?.currentTask?.key === "reset-password") {
               router.push("/session-tasks/reset-password");
             }
-            // Sinon : rien à faire, le useEffect sur orgRole redirige déjà
-            // vers /admin ou /user une fois la session pleinement active.
+            // Sinon : rien à faire, le useEffect sur orgId redirige déjà
+            // vers /user une fois la session pleinement active.
           },
         });
       } else if (
@@ -208,8 +205,8 @@ export default function LoginPage() {
                 if (session?.currentTask?.key === "reset-password") {
                   router.push("/session-tasks/reset-password");
                 }
-                // Sinon : rien à faire, le useEffect sur orgRole redirige déjà
-                // vers /admin ou /user une fois la session pleinement active.
+                // Sinon : rien à faire, le useEffect sur orgId redirige déjà
+                // vers /user une fois la session pleinement active.
               },
             });
           }

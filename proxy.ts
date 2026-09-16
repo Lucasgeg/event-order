@@ -5,13 +5,10 @@ const LOGIN_PATHS = new Set(["/login", "/inscription"]);
 
 export default clerkMiddleware(
   async (auth, req) => {
-    const { userId, orgRole } = await auth();
+    const { userId } = await auth();
 
     // Redirect authenticated users from the login page
     if (userId && LOGIN_PATHS.has(req.nextUrl.pathname)) {
-      if (orgRole === "org:admin") {
-        return NextResponse.redirect(new URL("/admin", req.url));
-      }
       return NextResponse.redirect(new URL("/user", req.url));
     }
   },

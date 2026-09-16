@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Button, Input, Label } from "../components/ui";
+import { PinInput } from "../components/PinInput";
 
 export default function RegistrationPage() {
   const [formData, setFormData] = useState({
@@ -15,13 +16,10 @@ export default function RegistrationPage() {
     adminEmail: "",
     adminPassword: "",
     adminConfirmPassword: "",
-    memberFirstName: "",
-    memberLastName: "",
-    memberEmail: "",
-    memberPassword: "",
-    memberConfirmPassword: "",
     promoCode: "",
   });
+  const [pinCode, setPinCode] = useState("");
+  const [pinConfirm, setPinConfirm] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -37,14 +35,6 @@ export default function RegistrationPage() {
     setError("");
     setSuccess(false);
 
-    if (
-      formData.adminEmail.trim().toLowerCase() ===
-      formData.memberEmail.trim().toLowerCase()
-    ) {
-      setError("L'email admin et l'email membre doivent être différents.");
-      return;
-    }
-
     if (formData.adminPassword !== formData.adminConfirmPassword) {
       setError(
         "Les deux mots de passe de l'administrateur ne correspondent pas."
@@ -52,8 +42,13 @@ export default function RegistrationPage() {
       return;
     }
 
-    if (formData.memberPassword !== formData.memberConfirmPassword) {
-      setError("Les deux mots de passe du membre ne correspondent pas.");
+    if (!/^\d{6}$/.test(pinCode)) {
+      setError("Le code PIN doit comporter 6 chiffres.");
+      return;
+    }
+
+    if (pinCode !== pinConfirm) {
+      setError("Les deux codes PIN ne correspondent pas.");
       return;
     }
 
@@ -66,10 +61,7 @@ export default function RegistrationPage() {
         adminLastName: formData.adminLastName,
         adminEmail: formData.adminEmail,
         adminPassword: formData.adminPassword,
-        memberFirstName: formData.memberFirstName,
-        memberLastName: formData.memberLastName,
-        memberEmail: formData.memberEmail,
-        memberPassword: formData.memberPassword,
+        pinCode,
         promoCode: formData.promoCode,
       };
       const response = await fetch("/api/public/create-organization", {
@@ -112,7 +104,7 @@ export default function RegistrationPage() {
             </h2>
             <p className="text-ink-soft mb-8">
               Votre organisation a été créée avec succès. Un email de
-              bienvenue a été envoyé à l&apos;administrateur et au membre.
+              bienvenue vous a été envoyé.
             </p>
             <Link
               href="/login"
@@ -152,7 +144,7 @@ export default function RegistrationPage() {
               Créer un compte
             </h1>
             <p className="mt-2 text-center text-sm text-ink-soft">
-              Créez votre organisation et invitez votre premier membre.
+              Créez votre organisation et son code PIN d&apos;accès admin.
             </p>
           </div>
 
@@ -247,71 +239,20 @@ export default function RegistrationPage() {
 
             <fieldset className="border-t border-line pt-5">
               <legend className="font-display text-lg font-bold text-ink pr-3">
-                Membre
+                Code PIN admin
               </legend>
-              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <p className="mt-1 text-sm text-ink-soft">
+                Ce code à 6 chiffres protège l&apos;accès au panneau admin
+                depuis la tablette de prise de commande.
+              </p>
+              <div className="mt-4 space-y-4">
                 <div>
-                  <Label htmlFor="memberFirstName">Prénom</Label>
-                  <Input
-                    type="text"
-                    name="memberFirstName"
-                    id="memberFirstName"
-                    required
-                    value={formData.memberFirstName}
-                    onChange={handleChange}
-                  />
+                  <Label>Code PIN</Label>
+                  <PinInput value={pinCode} onChange={setPinCode} />
                 </div>
-
                 <div>
-                  <Label htmlFor="memberLastName">Nom</Label>
-                  <Input
-                    type="text"
-                    name="memberLastName"
-                    id="memberLastName"
-                    required
-                    value={formData.memberLastName}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <Label htmlFor="memberEmail">Email</Label>
-                  <Input
-                    id="memberEmail"
-                    name="memberEmail"
-                    type="email"
-                    required
-                    value={formData.memberEmail}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="memberPassword">Mot de passe</Label>
-                  <Input
-                    id="memberPassword"
-                    name="memberPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    required
-                    value={formData.memberPassword}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="memberConfirmPassword">
-                    Confirmer le mot de passe
-                  </Label>
-                  <Input
-                    id="memberConfirmPassword"
-                    name="memberConfirmPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    required
-                    value={formData.memberConfirmPassword}
-                    onChange={handleChange}
-                  />
+                  <Label>Confirmer le code PIN</Label>
+                  <PinInput value={pinConfirm} onChange={setPinConfirm} />
                 </div>
               </div>
             </fieldset>

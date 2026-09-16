@@ -1,8 +1,10 @@
 import { prisma } from "../lib/prisma";
+import { hashPin } from "../lib/pin";
 
 // const prisma = new PrismaClient({});
 
 const TENANT_ID = "org_37kbhyOzOHRxQk7hWkySwnQmuYy";
+const DEMO_PIN = "123456";
 
 async function main() {
   console.log("Start seeding...");
@@ -14,10 +16,11 @@ async function main() {
     create: {
       id: TENANT_ID,
       name: "Cahier du Chef Demo",
+      pinCodeHash: hashPin(DEMO_PIN),
     },
   });
 
-  console.log(`Tenant created/found: ${tenant.id}`);
+  console.log(`Tenant created/found: ${tenant.id} (PIN admin démo : ${DEMO_PIN})`);
 
   // 2. Nettoyage : on repart d'une base vierge pour ce tenant à chaque
   // exécution, sinon catégories/produits se dupliquent à chaque relance.

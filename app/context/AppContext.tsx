@@ -8,7 +8,7 @@ import React, {
   useCallback,
   ReactNode,
 } from "react";
-import { useUser, useOrganization } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { User, Product, Category, SubCategory, Order } from "../types";
 
@@ -45,7 +45,6 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const { user: clerkUser, isLoaded, isSignedIn } = useUser();
-  const { membership } = useOrganization();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
@@ -55,7 +54,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ? {
         email: clerkUser.primaryEmailAddress?.emailAddress || "",
         name: clerkUser.fullName || clerkUser.username || "User",
-        role: membership?.role === "org:admin" ? "admin" : "user",
       }
     : null;
 

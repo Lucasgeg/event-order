@@ -13,26 +13,15 @@ model Tenant {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Accès au panneau admin par PIN (docs/adr/0003-compte-unique-pin-admin.md)
+  pinCodeHash       String
+  pinFailedAttempts Int       @default(0)
+  pinLockedUntil    DateTime?
+  pinLockoutLevel   Int       @default(0)
+
   categories Category[]
   products   Product[]
   orders     Order[]
-  members    TenantMember[]
-}
-
-model TenantMember {
-  id       String @id @default(cuid())
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  tenantId String
-
-  userId String // Clerk user id
-  role   TenantRole
-
-  @@unique([tenantId, userId])
-}
-
-enum TenantRole {
-  ADMIN
-  USER
 }
 
 model Category {

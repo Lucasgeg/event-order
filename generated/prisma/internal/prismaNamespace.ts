@@ -385,7 +385,6 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   Tenant: 'Tenant',
-  TenantMember: 'TenantMember',
   Category: 'Category',
   SubCategory: 'SubCategory',
   Product: 'Product',
@@ -406,7 +405,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "tenant" | "tenantMember" | "category" | "subCategory" | "product" | "order" | "orderItem"
+    modelProps: "tenant" | "category" | "subCategory" | "product" | "order" | "orderItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -481,80 +480,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.TenantCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.TenantCountAggregateOutputType> | number
-        }
-      }
-    }
-    TenantMember: {
-      payload: Prisma.$TenantMemberPayload<ExtArgs>
-      fields: Prisma.TenantMemberFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.TenantMemberFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantMemberPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.TenantMemberFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantMemberPayload>
-        }
-        findFirst: {
-          args: Prisma.TenantMemberFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantMemberPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.TenantMemberFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantMemberPayload>
-        }
-        findMany: {
-          args: Prisma.TenantMemberFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantMemberPayload>[]
-        }
-        create: {
-          args: Prisma.TenantMemberCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantMemberPayload>
-        }
-        createMany: {
-          args: Prisma.TenantMemberCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.TenantMemberCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantMemberPayload>[]
-        }
-        delete: {
-          args: Prisma.TenantMemberDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantMemberPayload>
-        }
-        update: {
-          args: Prisma.TenantMemberUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantMemberPayload>
-        }
-        deleteMany: {
-          args: Prisma.TenantMemberDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.TenantMemberUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.TenantMemberUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantMemberPayload>[]
-        }
-        upsert: {
-          args: Prisma.TenantMemberUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantMemberPayload>
-        }
-        aggregate: {
-          args: Prisma.TenantMemberAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateTenantMember>
-        }
-        groupBy: {
-          args: Prisma.TenantMemberGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.TenantMemberGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.TenantMemberCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.TenantMemberCountAggregateOutputType> | number
         }
       }
     }
@@ -971,20 +896,14 @@ export const TenantScalarFieldEnum = {
   id: 'id',
   name: 'name',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  pinCodeHash: 'pinCodeHash',
+  pinFailedAttempts: 'pinFailedAttempts',
+  pinLockedUntil: 'pinLockedUntil',
+  pinLockoutLevel: 'pinLockoutLevel'
 } as const
 
 export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
-
-
-export const TenantMemberScalarFieldEnum = {
-  id: 'id',
-  tenantId: 'tenantId',
-  userId: 'userId',
-  role: 'role'
-} as const
-
-export type TenantMemberScalarFieldEnum = (typeof TenantMemberScalarFieldEnum)[keyof typeof TenantMemberScalarFieldEnum]
 
 
 export const CategoryScalarFieldEnum = {
@@ -1100,16 +1019,16 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
- * Reference to a field of type 'TenantRole'
+ * Reference to a field of type 'Int'
  */
-export type EnumTenantRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TenantRole'>
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
     
 
 
 /**
- * Reference to a field of type 'TenantRole[]'
+ * Reference to a field of type 'Int[]'
  */
-export type ListEnumTenantRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TenantRole[]'>
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 
@@ -1131,20 +1050,6 @@ export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMode
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
-    
-
-
-/**
- * Reference to a field of type 'Int'
- */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-/**
- * Reference to a field of type 'Int[]'
- */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 /**
@@ -1243,7 +1148,6 @@ export type PrismaClientOptions = ({
 }
 export type GlobalOmitConfig = {
   tenant?: Prisma.TenantOmit
-  tenantMember?: Prisma.TenantMemberOmit
   category?: Prisma.CategoryOmit
   subCategory?: Prisma.SubCategoryOmit
   product?: Prisma.ProductOmit

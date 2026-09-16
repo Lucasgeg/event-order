@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { useApp } from "@/app/context/AppContext";
 import { useConfirm } from "@/app/components/ConfirmProvider";
 import { Order } from "@/app/types";
 import {
@@ -27,11 +25,15 @@ import {
   LoadingBlock,
 } from "@/app/components/ui";
 
-export function OrdersManager() {
-  const { user } = useApp();
+interface OrdersManagerProps {
+  /** Vue purement en lecture (utilisé par /commandes) : masque la colonne Actions. */
+  readOnly?: boolean;
+  /** Appelé avec l'id de la commande cliquée sur "Modifier" (édition centralisée dans /admin). */
+  onEdit?: (orderId: string) => void;
+}
+
+export function OrdersManager({ readOnly = false, onEdit }: OrdersManagerProps) {
   const confirmAction = useConfirm();
-  // L'API refuse PUT/DELETE aux non-admins ; ici on ne fait que refléter la règle
-  const canEdit = user?.role === "admin";
 
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
   const [orders, setOrders] = useState<Order[]>([]);
@@ -40,7 +42,6 @@ export function OrdersManager() {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const router = useRouter();
 
   const fetchOrders = async (
     targetPage: number = 1,
@@ -183,7 +184,7 @@ export function OrdersManager() {
                     <Th>Date de retrait</Th>
                     <Th>Produits</Th>
                     <Th>Total</Th>
-                    <Th className="text-right">Actions</Th>
+                    {!readOnly && <Th className="text-right">Actions</Th>}
                   </tr>
                 </thead>
                 <tbody className="bg-surface divide-y divide-line">
@@ -221,36 +222,26 @@ export function OrdersManager() {
                           .toFixed(2)}{" "}
                         €
                       </Td>
-                      <Td className="text-right whitespace-nowrap">
-                        <div className="inline-flex gap-1">
-                          <IconButton
-                            label={
-                              canEdit
-                                ? `Modifier la commande de ${order.clientName}`
-                                : "Réservé aux administrateurs"
-                            }
-                            tone="primary"
-                            disabled={!canEdit}
-                            onClick={() =>
-                              router.push(`/user?orderId=${order.id}`)
-                            }
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </IconButton>
-                          <IconButton
-                            label={
-                              canEdit
-                                ? `Supprimer la commande de ${order.clientName}`
-                                : "Réservé aux administrateurs"
-                            }
-                            tone="danger"
-                            disabled={!canEdit}
-                            onClick={() => handleDeleteOrder(order)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </IconButton>
-                        </div>
-                      </Td>
+                      {!readOnly && (
+                        <Td className="text-right whitespace-nowrap">
+                          <div className="inline-flex gap-1">
+                            <IconButton
+                              label={`Modifier la commande de ${order.clientName}`}
+                              tone="primary"
+                              onClick={() => onEdit?.(order.id)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </IconButton>
+                            <IconButton
+                              label={`Supprimer la commande de ${order.clientName}`}
+                              tone="danger"
+                              onClick={() => handleDeleteOrder(order)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </IconButton>
+                          </div>
+                        </Td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

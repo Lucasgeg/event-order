@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession } from "@/lib/adminSession";
 
 interface OrderItemInput {
   /** Présent = ligne d'origine (valeurs figées conservées) ; absent = nouvelle ligne */
@@ -57,18 +58,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { orgId, orgRole } = await auth();
-
-    if (!orgId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (orgRole !== "org:admin") {
-      return NextResponse.json(
-        { error: "Réservé aux administrateurs" },
-        { status: 403 },
-      );
-    }
+    const session = await requireAdminSession();
+    if (session instanceof NextResponse) return session;
+    const { orgId } = session;
 
     const { id } = await params;
     const body: UpdateOrderBody = await request.json();
@@ -208,18 +200,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { orgId, orgRole } = await auth();
-
-    if (!orgId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (orgRole !== "org:admin") {
-      return NextResponse.json(
-        { error: "Réservé aux administrateurs" },
-        { status: 403 },
-      );
-    }
+    const session = await requireAdminSession();
+    if (session instanceof NextResponse) return session;
+    const { orgId } = session;
 
     const { id } = await params;
     const result = await prisma.order.deleteMany({

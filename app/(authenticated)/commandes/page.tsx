@@ -33,16 +33,14 @@ export default function CommandesPage() {
         </h1>
 
         <div className="ml-auto flex items-center gap-3">
-          {user?.role === "admin" && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push("/admin")}
-            >
-              <LayoutDashboard className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">Retour Admin</span>
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/admin")}
+          >
+            <LayoutDashboard className="h-4 w-4" aria-hidden />
+            <span className="hidden sm:inline">Admin</span>
+          </Button>
           <span className="text-sm text-ink-soft hidden sm:inline">
             {user?.name}
           </span>
@@ -51,7 +49,7 @@ export default function CommandesPage() {
       </div>
 
       <main className="flex-1 p-4 sm:p-6 max-w-6xl w-full mx-auto">
-        <OrdersManager />
+        <OrdersManager readOnly />
       </main>
     </div>
   );

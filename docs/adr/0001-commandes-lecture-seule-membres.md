@@ -32,3 +32,12 @@ du membre (voir `TODO.md`) — s'appuiera sur cette barrière serveur : le PIN
 sera validé côté serveur et accordera un droit court et ciblé ; les boutons
 désactivés deviendront le point d'entrée de ce flux. Une API ouverte aurait
 rendu cette élévation décorative.
+
+## Mise à jour (2026-08-31)
+
+L'évolution ci-dessus est remplacée par un modèle plus large : voir
+`docs/adr/0003-compte-unique-pin-admin.md`. Le compte "membre" séparé
+disparaît (comptes fusionnés en un seul par tenant) ; le PIN donne accès à
+tout le panneau admin plutôt qu'à une action précise. Le reste de cet ADR —
+`/commandes`, les boutons désactivés comme reflet d'une règle serveur — reste
+valable et sert de base au nouveau gating.

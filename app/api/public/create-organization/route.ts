@@ -4,8 +4,10 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { WelcomeEmail } from "@/emails/WelcomeEmail";
 import { prisma } from "@/lib/prisma";
+import { hashPin } from "@/lib/pin";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const PIN_PATTERN = /^\d{6}$/;
 
 export async function POST(req: Request) {
   try {
@@ -13,25 +15,19 @@ export async function POST(req: Request) {
     const {
       organisationName,
       adminEmail,
-      memberEmail,
       adminFirstName,
       adminLastName,
-      memberFirstName,
-      memberLastName,
       adminPassword,
-      memberPassword,
+      pinCode,
     } = body;
 
     if (
       !organisationName ||
       !adminEmail ||
-      !memberEmail ||
       !adminFirstName ||
       !adminLastName ||
-      !memberFirstName ||
-      !memberLastName ||
       !adminPassword ||
-      !memberPassword
+      !pinCode
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -39,19 +35,16 @@ export async function POST(req: Request) {
       );
     }
 
-    if (adminEmail.trim().toLowerCase() === memberEmail.trim().toLowerCase()) {
+    if (!PIN_PATTERN.test(pinCode)) {
       return NextResponse.json(
-        {
-          error:
-            "L'email admin et l'email membre doivent être différents.",
-        },
+        { error: "Le code PIN doit comporter 6 chiffres." },
         { status: 400 }
       );
     }
 
     const client = await clerkClient();
 
-    // 2. Create Admin User
+    // 2. Create Admin User (l'unique compte du tenant)
     let adminUser;
     try {
       adminUser = await client.users.createUser({
@@ -75,7 +68,6 @@ export async function POST(req: Request) {
     // roll back everything created so far before returning an error, or we
     // leave orphaned Clerk resources with no matching Tenant in DB.
     let organization;
-    let memberUser;
     try {
       // 3. Create Organization (Admin is creator)
       organization = await client.organizations.createOrganization({
@@ -83,53 +75,22 @@ export async function POST(req: Request) {
         createdBy: adminUser.id,
       });
 
-      // 4. Create Member User
-      memberUser = await client.users.createUser({
-        emailAddress: [memberEmail],
-        firstName: memberFirstName,
-        lastName: memberLastName,
-        password: memberPassword,
-        skipPasswordChecks: false,
-        skipPasswordRequirement: false,
-      });
-
-      // 5. Add Member to Organization
-      await client.organizations.createOrganizationMembership({
-        organizationId: organization.id,
-        userId: memberUser.id,
-        role: "org:member",
-      });
-
-      // Create Tenant and Members in DB
+      // Create Tenant
       await prisma.tenant.create({
         data: {
           id: organization.id,
           name: organisationName,
-          members: {
-            create: [
-              {
-                userId: adminUser.id,
-                role: "ADMIN",
-              },
-              {
-                userId: memberUser.id,
-                role: "USER",
-              },
-            ],
-          },
+          pinCodeHash: hashPin(pinCode),
         },
       });
     } catch (e: any) {
       console.error("Error in create-organization (post-admin steps):", e);
 
       // Best-effort cleanup of whatever was created before the failure.
-      // Deleting the organization also removes its memberships; the admin
-      // user is deleted separately since it was created before this block.
       await Promise.allSettled([
         organization
           ? client.organizations.deleteOrganization(organization.id)
           : Promise.resolve(),
-        memberUser ? client.users.deleteUser(memberUser.id) : Promise.resolve(),
         client.users.deleteUser(adminUser.id),
       ]).then((results) => {
         for (const result of results) {
@@ -145,34 +106,23 @@ export async function POST(req: Request) {
       );
     }
 
-    // 6. Send Emails
+    // 6. Send Email
     if (process.env.RESEND_API_KEY) {
       try {
-        await resend.batch.send([
-          {
-            from: "Cet Extra <no-reply@cetextra.fr>",
-            to: adminEmail,
-            subject: "Bienvenue sur Cahier du Chef",
-            react: WelcomeEmail({
-              email: adminEmail,
-              role: "Admin",
-            }),
-          },
-          {
-            from: "Cet Extra <no-reply@cetextra.fr>",
-            to: memberEmail,
-            subject: "Bienvenue sur Cahier du Chef",
-            react: WelcomeEmail({
-              email: memberEmail,
-              role: "Membre",
-            }),
-          },
-        ]);
+        await resend.emails.send({
+          from: "Cet Extra <no-reply@cetextra.fr>",
+          to: adminEmail,
+          subject: "Bienvenue sur Cahier du Chef",
+          react: WelcomeEmail({
+            email: adminEmail,
+            role: "Admin",
+          }),
+        });
       } catch (error) {
-        console.error("Error sending emails:", error);
+        console.error("Error sending email:", error);
       }
     } else {
-      console.log("RESEND_API_KEY not configured. Skipping welcome emails.");
+      console.log("RESEND_API_KEY not configured. Skipping welcome email.");
     }
 
     return NextResponse.json({
@@ -181,11 +131,8 @@ export async function POST(req: Request) {
         id: organization.id,
         name: organization.name,
       },
-      users: {
-        admin: { id: adminUser.id, email: adminEmail },
-        member: { id: memberUser.id, email: memberEmail },
-      },
-      message: "Organization and users created. Emails sent (or logged).",
+      user: { id: adminUser.id, email: adminEmail },
+      message: "Organization and user created. Email sent (or logged).",
     });
   } catch (error: any) {
     console.error("Error in create-organization:", error);

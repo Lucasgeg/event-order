@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession } from "@/lib/adminSession";
 
 interface OrderItemInput {
   /** Présent = ligne d'origine (valeurs figées conservées) ; absent = nouvelle ligne */
@@ -240,18 +241,9 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { orgId, orgRole } = await auth();
-
-    if (!orgId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (orgRole !== "org:admin") {
-      return NextResponse.json(
-        { error: "Réservé aux administrateurs" },
-        { status: 403 },
-      );
-    }
+    const session = await requireAdminSession();
+    if (session instanceof NextResponse) return session;
+    const { orgId } = session;
 
     const body: UpdateOrderBody = await request.json();
     const { id, clientName, pickupDate, items } = body;
@@ -352,18 +344,9 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { orgId, orgRole } = await auth();
-
-    if (!orgId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (orgRole !== "org:admin") {
-      return NextResponse.json(
-        { error: "Réservé aux administrateurs" },
-        { status: 403 },
-      );
-    }
+    const session = await requireAdminSession();
+    if (session instanceof NextResponse) return session;
+    const { orgId } = session;
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");

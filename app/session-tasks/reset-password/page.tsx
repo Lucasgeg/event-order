@@ -9,7 +9,7 @@ import { Button, Input, Label, LoadingBlock } from "../../components/ui";
 
 export default function ResetPasswordTaskPage() {
   const { isLoaded, session } = useSession();
-  const { orgRole } = useAuth();
+  const { orgId } = useAuth();
   const { setActive } = useClerk();
   const router = useRouter();
 
@@ -34,14 +34,10 @@ export default function ResetPasswordTaskPage() {
       return () => clearTimeout(timeout);
     }
 
-    if (!hasPendingResetPasswordTask) {
-      if (orgRole === "org:admin") {
-        router.replace("/admin");
-      } else if (orgRole) {
-        router.replace("/user");
-      }
+    if (!hasPendingResetPasswordTask && orgId) {
+      router.replace("/user");
     }
-  }, [isLoaded, session, hasPendingResetPasswordTask, orgRole, router]);
+  }, [isLoaded, session, hasPendingResetPasswordTask, orgId, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

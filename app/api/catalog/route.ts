@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
+import { requireAdminSession } from "@/lib/adminSession";
 
 export async function GET() {
   try {
@@ -50,11 +51,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { orgId } = await auth();
-
-    if (!orgId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireAdminSession();
+    if (session instanceof NextResponse) return session;
+    const { orgId } = session;
 
     const body = await request.json();
     const { type, ...data } = body;
@@ -99,11 +98,9 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { orgId } = await auth();
-
-    if (!orgId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireAdminSession();
+    if (session instanceof NextResponse) return session;
+    const { orgId } = session;
 
     const body = await request.json();
     const { type, id, ...data } = body;
@@ -163,11 +160,9 @@ export async function DELETE(request: Request) {
   let id: string | null = null;
 
   try {
-    ({ orgId } = await auth());
-
-    if (!orgId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await requireAdminSession();
+    if (session instanceof NextResponse) return session;
+    orgId = session.orgId;
 
     const { searchParams } = new URL(request.url);
     type = searchParams.get("type");

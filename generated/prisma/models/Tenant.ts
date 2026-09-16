@@ -20,8 +20,20 @@ export type TenantModel = runtime.Types.Result.DefaultSelection<Prisma.$TenantPa
 
 export type AggregateTenant = {
   _count: TenantCountAggregateOutputType | null
+  _avg: TenantAvgAggregateOutputType | null
+  _sum: TenantSumAggregateOutputType | null
   _min: TenantMinAggregateOutputType | null
   _max: TenantMaxAggregateOutputType | null
+}
+
+export type TenantAvgAggregateOutputType = {
+  pinFailedAttempts: number | null
+  pinLockoutLevel: number | null
+}
+
+export type TenantSumAggregateOutputType = {
+  pinFailedAttempts: number | null
+  pinLockoutLevel: number | null
 }
 
 export type TenantMinAggregateOutputType = {
@@ -29,6 +41,10 @@ export type TenantMinAggregateOutputType = {
   name: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  pinCodeHash: string | null
+  pinFailedAttempts: number | null
+  pinLockedUntil: Date | null
+  pinLockoutLevel: number | null
 }
 
 export type TenantMaxAggregateOutputType = {
@@ -36,6 +52,10 @@ export type TenantMaxAggregateOutputType = {
   name: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  pinCodeHash: string | null
+  pinFailedAttempts: number | null
+  pinLockedUntil: Date | null
+  pinLockoutLevel: number | null
 }
 
 export type TenantCountAggregateOutputType = {
@@ -43,15 +63,33 @@ export type TenantCountAggregateOutputType = {
   name: number
   createdAt: number
   updatedAt: number
+  pinCodeHash: number
+  pinFailedAttempts: number
+  pinLockedUntil: number
+  pinLockoutLevel: number
   _all: number
 }
 
+
+export type TenantAvgAggregateInputType = {
+  pinFailedAttempts?: true
+  pinLockoutLevel?: true
+}
+
+export type TenantSumAggregateInputType = {
+  pinFailedAttempts?: true
+  pinLockoutLevel?: true
+}
 
 export type TenantMinAggregateInputType = {
   id?: true
   name?: true
   createdAt?: true
   updatedAt?: true
+  pinCodeHash?: true
+  pinFailedAttempts?: true
+  pinLockedUntil?: true
+  pinLockoutLevel?: true
 }
 
 export type TenantMaxAggregateInputType = {
@@ -59,6 +97,10 @@ export type TenantMaxAggregateInputType = {
   name?: true
   createdAt?: true
   updatedAt?: true
+  pinCodeHash?: true
+  pinFailedAttempts?: true
+  pinLockedUntil?: true
+  pinLockoutLevel?: true
 }
 
 export type TenantCountAggregateInputType = {
@@ -66,6 +108,10 @@ export type TenantCountAggregateInputType = {
   name?: true
   createdAt?: true
   updatedAt?: true
+  pinCodeHash?: true
+  pinFailedAttempts?: true
+  pinLockedUntil?: true
+  pinLockoutLevel?: true
   _all?: true
 }
 
@@ -107,6 +153,18 @@ export type TenantAggregateArgs<ExtArgs extends runtime.Types.Extensions.Interna
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: TenantAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: TenantSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: TenantMinAggregateInputType
@@ -137,6 +195,8 @@ export type TenantGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   _count?: TenantCountAggregateInputType | true
+  _avg?: TenantAvgAggregateInputType
+  _sum?: TenantSumAggregateInputType
   _min?: TenantMinAggregateInputType
   _max?: TenantMaxAggregateInputType
 }
@@ -146,7 +206,13 @@ export type TenantGroupByOutputType = {
   name: string
   createdAt: Date
   updatedAt: Date
+  pinCodeHash: string
+  pinFailedAttempts: number
+  pinLockedUntil: Date | null
+  pinLockoutLevel: number
   _count: TenantCountAggregateOutputType | null
+  _avg: TenantAvgAggregateOutputType | null
+  _sum: TenantSumAggregateOutputType | null
   _min: TenantMinAggregateOutputType | null
   _max: TenantMaxAggregateOutputType | null
 }
@@ -174,10 +240,13 @@ export type TenantWhereInput = {
   name?: Prisma.StringFilter<"Tenant"> | string
   createdAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
+  pinCodeHash?: Prisma.StringFilter<"Tenant"> | string
+  pinFailedAttempts?: Prisma.IntFilter<"Tenant"> | number
+  pinLockedUntil?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null
+  pinLockoutLevel?: Prisma.IntFilter<"Tenant"> | number
   categories?: Prisma.CategoryListRelationFilter
   products?: Prisma.ProductListRelationFilter
   orders?: Prisma.OrderListRelationFilter
-  members?: Prisma.TenantMemberListRelationFilter
 }
 
 export type TenantOrderByWithRelationInput = {
@@ -185,10 +254,13 @@ export type TenantOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  pinCodeHash?: Prisma.SortOrder
+  pinFailedAttempts?: Prisma.SortOrder
+  pinLockedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  pinLockoutLevel?: Prisma.SortOrder
   categories?: Prisma.CategoryOrderByRelationAggregateInput
   products?: Prisma.ProductOrderByRelationAggregateInput
   orders?: Prisma.OrderOrderByRelationAggregateInput
-  members?: Prisma.TenantMemberOrderByRelationAggregateInput
 }
 
 export type TenantWhereUniqueInput = Prisma.AtLeast<{
@@ -199,10 +271,13 @@ export type TenantWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"Tenant"> | string
   createdAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
+  pinCodeHash?: Prisma.StringFilter<"Tenant"> | string
+  pinFailedAttempts?: Prisma.IntFilter<"Tenant"> | number
+  pinLockedUntil?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null
+  pinLockoutLevel?: Prisma.IntFilter<"Tenant"> | number
   categories?: Prisma.CategoryListRelationFilter
   products?: Prisma.ProductListRelationFilter
   orders?: Prisma.OrderListRelationFilter
-  members?: Prisma.TenantMemberListRelationFilter
 }, "id">
 
 export type TenantOrderByWithAggregationInput = {
@@ -210,9 +285,15 @@ export type TenantOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  pinCodeHash?: Prisma.SortOrder
+  pinFailedAttempts?: Prisma.SortOrder
+  pinLockedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  pinLockoutLevel?: Prisma.SortOrder
   _count?: Prisma.TenantCountOrderByAggregateInput
+  _avg?: Prisma.TenantAvgOrderByAggregateInput
   _max?: Prisma.TenantMaxOrderByAggregateInput
   _min?: Prisma.TenantMinOrderByAggregateInput
+  _sum?: Prisma.TenantSumOrderByAggregateInput
 }
 
 export type TenantScalarWhereWithAggregatesInput = {
@@ -223,6 +304,10 @@ export type TenantScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Tenant"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Tenant"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Tenant"> | Date | string
+  pinCodeHash?: Prisma.StringWithAggregatesFilter<"Tenant"> | string
+  pinFailedAttempts?: Prisma.IntWithAggregatesFilter<"Tenant"> | number
+  pinLockedUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"Tenant"> | Date | string | null
+  pinLockoutLevel?: Prisma.IntWithAggregatesFilter<"Tenant"> | number
 }
 
 export type TenantCreateInput = {
@@ -230,10 +315,13 @@ export type TenantCreateInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  pinCodeHash: string
+  pinFailedAttempts?: number
+  pinLockedUntil?: Date | string | null
+  pinLockoutLevel?: number
   categories?: Prisma.CategoryCreateNestedManyWithoutTenantInput
   products?: Prisma.ProductCreateNestedManyWithoutTenantInput
   orders?: Prisma.OrderCreateNestedManyWithoutTenantInput
-  members?: Prisma.TenantMemberCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateInput = {
@@ -241,10 +329,13 @@ export type TenantUncheckedCreateInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  pinCodeHash: string
+  pinFailedAttempts?: number
+  pinLockedUntil?: Date | string | null
+  pinLockoutLevel?: number
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutTenantInput
   products?: Prisma.ProductUncheckedCreateNestedManyWithoutTenantInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutTenantInput
-  members?: Prisma.TenantMemberUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUpdateInput = {
@@ -252,10 +343,13 @@ export type TenantUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pinCodeHash?: Prisma.StringFieldUpdateOperationsInput | string
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  pinLockoutLevel?: Prisma.IntFieldUpdateOperationsInput | number
   categories?: Prisma.CategoryUpdateManyWithoutTenantNestedInput
   products?: Prisma.ProductUpdateManyWithoutTenantNestedInput
   orders?: Prisma.OrderUpdateManyWithoutTenantNestedInput
-  members?: Prisma.TenantMemberUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateInput = {
@@ -263,10 +357,13 @@ export type TenantUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pinCodeHash?: Prisma.StringFieldUpdateOperationsInput | string
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  pinLockoutLevel?: Prisma.IntFieldUpdateOperationsInput | number
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutTenantNestedInput
   products?: Prisma.ProductUncheckedUpdateManyWithoutTenantNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutTenantNestedInput
-  members?: Prisma.TenantMemberUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateManyInput = {
@@ -274,6 +371,10 @@ export type TenantCreateManyInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  pinCodeHash: string
+  pinFailedAttempts?: number
+  pinLockedUntil?: Date | string | null
+  pinLockoutLevel?: number
 }
 
 export type TenantUpdateManyMutationInput = {
@@ -281,6 +382,10 @@ export type TenantUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pinCodeHash?: Prisma.StringFieldUpdateOperationsInput | string
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  pinLockoutLevel?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type TenantUncheckedUpdateManyInput = {
@@ -288,6 +393,10 @@ export type TenantUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pinCodeHash?: Prisma.StringFieldUpdateOperationsInput | string
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  pinLockoutLevel?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type TenantCountOrderByAggregateInput = {
@@ -295,6 +404,15 @@ export type TenantCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  pinCodeHash?: Prisma.SortOrder
+  pinFailedAttempts?: Prisma.SortOrder
+  pinLockedUntil?: Prisma.SortOrder
+  pinLockoutLevel?: Prisma.SortOrder
+}
+
+export type TenantAvgOrderByAggregateInput = {
+  pinFailedAttempts?: Prisma.SortOrder
+  pinLockoutLevel?: Prisma.SortOrder
 }
 
 export type TenantMaxOrderByAggregateInput = {
@@ -302,6 +420,10 @@ export type TenantMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  pinCodeHash?: Prisma.SortOrder
+  pinFailedAttempts?: Prisma.SortOrder
+  pinLockedUntil?: Prisma.SortOrder
+  pinLockoutLevel?: Prisma.SortOrder
 }
 
 export type TenantMinOrderByAggregateInput = {
@@ -309,6 +431,15 @@ export type TenantMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  pinCodeHash?: Prisma.SortOrder
+  pinFailedAttempts?: Prisma.SortOrder
+  pinLockedUntil?: Prisma.SortOrder
+  pinLockoutLevel?: Prisma.SortOrder
+}
+
+export type TenantSumOrderByAggregateInput = {
+  pinFailedAttempts?: Prisma.SortOrder
+  pinLockoutLevel?: Prisma.SortOrder
 }
 
 export type TenantScalarRelationFilter = {
@@ -324,18 +455,16 @@ export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
 }
 
-export type TenantCreateNestedOneWithoutMembersInput = {
-  create?: Prisma.XOR<Prisma.TenantCreateWithoutMembersInput, Prisma.TenantUncheckedCreateWithoutMembersInput>
-  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutMembersInput
-  connect?: Prisma.TenantWhereUniqueInput
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
-export type TenantUpdateOneRequiredWithoutMembersNestedInput = {
-  create?: Prisma.XOR<Prisma.TenantCreateWithoutMembersInput, Prisma.TenantUncheckedCreateWithoutMembersInput>
-  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutMembersInput
-  upsert?: Prisma.TenantUpsertWithoutMembersInput
-  connect?: Prisma.TenantWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutMembersInput, Prisma.TenantUpdateWithoutMembersInput>, Prisma.TenantUncheckedUpdateWithoutMembersInput>
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
 }
 
 export type TenantCreateNestedOneWithoutCategoriesInput = {
@@ -380,70 +509,17 @@ export type TenantUpdateOneRequiredWithoutOrdersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutOrdersInput, Prisma.TenantUpdateWithoutOrdersInput>, Prisma.TenantUncheckedUpdateWithoutOrdersInput>
 }
 
-export type TenantCreateWithoutMembersInput = {
-  id?: string
-  name: string
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  categories?: Prisma.CategoryCreateNestedManyWithoutTenantInput
-  products?: Prisma.ProductCreateNestedManyWithoutTenantInput
-  orders?: Prisma.OrderCreateNestedManyWithoutTenantInput
-}
-
-export type TenantUncheckedCreateWithoutMembersInput = {
-  id?: string
-  name: string
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutTenantInput
-  products?: Prisma.ProductUncheckedCreateNestedManyWithoutTenantInput
-  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutTenantInput
-}
-
-export type TenantCreateOrConnectWithoutMembersInput = {
-  where: Prisma.TenantWhereUniqueInput
-  create: Prisma.XOR<Prisma.TenantCreateWithoutMembersInput, Prisma.TenantUncheckedCreateWithoutMembersInput>
-}
-
-export type TenantUpsertWithoutMembersInput = {
-  update: Prisma.XOR<Prisma.TenantUpdateWithoutMembersInput, Prisma.TenantUncheckedUpdateWithoutMembersInput>
-  create: Prisma.XOR<Prisma.TenantCreateWithoutMembersInput, Prisma.TenantUncheckedCreateWithoutMembersInput>
-  where?: Prisma.TenantWhereInput
-}
-
-export type TenantUpdateToOneWithWhereWithoutMembersInput = {
-  where?: Prisma.TenantWhereInput
-  data: Prisma.XOR<Prisma.TenantUpdateWithoutMembersInput, Prisma.TenantUncheckedUpdateWithoutMembersInput>
-}
-
-export type TenantUpdateWithoutMembersInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  categories?: Prisma.CategoryUpdateManyWithoutTenantNestedInput
-  products?: Prisma.ProductUpdateManyWithoutTenantNestedInput
-  orders?: Prisma.OrderUpdateManyWithoutTenantNestedInput
-}
-
-export type TenantUncheckedUpdateWithoutMembersInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  categories?: Prisma.CategoryUncheckedUpdateManyWithoutTenantNestedInput
-  products?: Prisma.ProductUncheckedUpdateManyWithoutTenantNestedInput
-  orders?: Prisma.OrderUncheckedUpdateManyWithoutTenantNestedInput
-}
-
 export type TenantCreateWithoutCategoriesInput = {
   id?: string
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  pinCodeHash: string
+  pinFailedAttempts?: number
+  pinLockedUntil?: Date | string | null
+  pinLockoutLevel?: number
   products?: Prisma.ProductCreateNestedManyWithoutTenantInput
   orders?: Prisma.OrderCreateNestedManyWithoutTenantInput
-  members?: Prisma.TenantMemberCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutCategoriesInput = {
@@ -451,9 +527,12 @@ export type TenantUncheckedCreateWithoutCategoriesInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  pinCodeHash: string
+  pinFailedAttempts?: number
+  pinLockedUntil?: Date | string | null
+  pinLockoutLevel?: number
   products?: Prisma.ProductUncheckedCreateNestedManyWithoutTenantInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutTenantInput
-  members?: Prisma.TenantMemberUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutCategoriesInput = {
@@ -477,9 +556,12 @@ export type TenantUpdateWithoutCategoriesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pinCodeHash?: Prisma.StringFieldUpdateOperationsInput | string
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  pinLockoutLevel?: Prisma.IntFieldUpdateOperationsInput | number
   products?: Prisma.ProductUpdateManyWithoutTenantNestedInput
   orders?: Prisma.OrderUpdateManyWithoutTenantNestedInput
-  members?: Prisma.TenantMemberUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutCategoriesInput = {
@@ -487,9 +569,12 @@ export type TenantUncheckedUpdateWithoutCategoriesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pinCodeHash?: Prisma.StringFieldUpdateOperationsInput | string
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  pinLockoutLevel?: Prisma.IntFieldUpdateOperationsInput | number
   products?: Prisma.ProductUncheckedUpdateManyWithoutTenantNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutTenantNestedInput
-  members?: Prisma.TenantMemberUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutProductsInput = {
@@ -497,9 +582,12 @@ export type TenantCreateWithoutProductsInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  pinCodeHash: string
+  pinFailedAttempts?: number
+  pinLockedUntil?: Date | string | null
+  pinLockoutLevel?: number
   categories?: Prisma.CategoryCreateNestedManyWithoutTenantInput
   orders?: Prisma.OrderCreateNestedManyWithoutTenantInput
-  members?: Prisma.TenantMemberCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutProductsInput = {
@@ -507,9 +595,12 @@ export type TenantUncheckedCreateWithoutProductsInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  pinCodeHash: string
+  pinFailedAttempts?: number
+  pinLockedUntil?: Date | string | null
+  pinLockoutLevel?: number
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutTenantInput
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutTenantInput
-  members?: Prisma.TenantMemberUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutProductsInput = {
@@ -533,9 +624,12 @@ export type TenantUpdateWithoutProductsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pinCodeHash?: Prisma.StringFieldUpdateOperationsInput | string
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  pinLockoutLevel?: Prisma.IntFieldUpdateOperationsInput | number
   categories?: Prisma.CategoryUpdateManyWithoutTenantNestedInput
   orders?: Prisma.OrderUpdateManyWithoutTenantNestedInput
-  members?: Prisma.TenantMemberUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutProductsInput = {
@@ -543,9 +637,12 @@ export type TenantUncheckedUpdateWithoutProductsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pinCodeHash?: Prisma.StringFieldUpdateOperationsInput | string
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  pinLockoutLevel?: Prisma.IntFieldUpdateOperationsInput | number
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutTenantNestedInput
   orders?: Prisma.OrderUncheckedUpdateManyWithoutTenantNestedInput
-  members?: Prisma.TenantMemberUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantCreateWithoutOrdersInput = {
@@ -553,9 +650,12 @@ export type TenantCreateWithoutOrdersInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  pinCodeHash: string
+  pinFailedAttempts?: number
+  pinLockedUntil?: Date | string | null
+  pinLockoutLevel?: number
   categories?: Prisma.CategoryCreateNestedManyWithoutTenantInput
   products?: Prisma.ProductCreateNestedManyWithoutTenantInput
-  members?: Prisma.TenantMemberCreateNestedManyWithoutTenantInput
 }
 
 export type TenantUncheckedCreateWithoutOrdersInput = {
@@ -563,9 +663,12 @@ export type TenantUncheckedCreateWithoutOrdersInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  pinCodeHash: string
+  pinFailedAttempts?: number
+  pinLockedUntil?: Date | string | null
+  pinLockoutLevel?: number
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutTenantInput
   products?: Prisma.ProductUncheckedCreateNestedManyWithoutTenantInput
-  members?: Prisma.TenantMemberUncheckedCreateNestedManyWithoutTenantInput
 }
 
 export type TenantCreateOrConnectWithoutOrdersInput = {
@@ -589,9 +692,12 @@ export type TenantUpdateWithoutOrdersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pinCodeHash?: Prisma.StringFieldUpdateOperationsInput | string
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  pinLockoutLevel?: Prisma.IntFieldUpdateOperationsInput | number
   categories?: Prisma.CategoryUpdateManyWithoutTenantNestedInput
   products?: Prisma.ProductUpdateManyWithoutTenantNestedInput
-  members?: Prisma.TenantMemberUpdateManyWithoutTenantNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutOrdersInput = {
@@ -599,9 +705,12 @@ export type TenantUncheckedUpdateWithoutOrdersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pinCodeHash?: Prisma.StringFieldUpdateOperationsInput | string
+  pinFailedAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  pinLockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  pinLockoutLevel?: Prisma.IntFieldUpdateOperationsInput | number
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutTenantNestedInput
   products?: Prisma.ProductUncheckedUpdateManyWithoutTenantNestedInput
-  members?: Prisma.TenantMemberUncheckedUpdateManyWithoutTenantNestedInput
 }
 
 
@@ -613,14 +722,12 @@ export type TenantCountOutputType = {
   categories: number
   products: number
   orders: number
-  members: number
 }
 
 export type TenantCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   categories?: boolean | TenantCountOutputTypeCountCategoriesArgs
   products?: boolean | TenantCountOutputTypeCountProductsArgs
   orders?: boolean | TenantCountOutputTypeCountOrdersArgs
-  members?: boolean | TenantCountOutputTypeCountMembersArgs
 }
 
 /**
@@ -654,23 +761,19 @@ export type TenantCountOutputTypeCountOrdersArgs<ExtArgs extends runtime.Types.E
   where?: Prisma.OrderWhereInput
 }
 
-/**
- * TenantCountOutputType without action
- */
-export type TenantCountOutputTypeCountMembersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.TenantMemberWhereInput
-}
-
 
 export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  pinCodeHash?: boolean
+  pinFailedAttempts?: boolean
+  pinLockedUntil?: boolean
+  pinLockoutLevel?: boolean
   categories?: boolean | Prisma.Tenant$categoriesArgs<ExtArgs>
   products?: boolean | Prisma.Tenant$productsArgs<ExtArgs>
   orders?: boolean | Prisma.Tenant$ordersArgs<ExtArgs>
-  members?: boolean | Prisma.Tenant$membersArgs<ExtArgs>
   _count?: boolean | Prisma.TenantCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["tenant"]>
 
@@ -679,6 +782,10 @@ export type TenantSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   name?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  pinCodeHash?: boolean
+  pinFailedAttempts?: boolean
+  pinLockedUntil?: boolean
+  pinLockoutLevel?: boolean
 }, ExtArgs["result"]["tenant"]>
 
 export type TenantSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -686,6 +793,10 @@ export type TenantSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   name?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  pinCodeHash?: boolean
+  pinFailedAttempts?: boolean
+  pinLockedUntil?: boolean
+  pinLockoutLevel?: boolean
 }, ExtArgs["result"]["tenant"]>
 
 export type TenantSelectScalar = {
@@ -693,14 +804,17 @@ export type TenantSelectScalar = {
   name?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  pinCodeHash?: boolean
+  pinFailedAttempts?: boolean
+  pinLockedUntil?: boolean
+  pinLockoutLevel?: boolean
 }
 
-export type TenantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "createdAt" | "updatedAt", ExtArgs["result"]["tenant"]>
+export type TenantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "createdAt" | "updatedAt" | "pinCodeHash" | "pinFailedAttempts" | "pinLockedUntil" | "pinLockoutLevel", ExtArgs["result"]["tenant"]>
 export type TenantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   categories?: boolean | Prisma.Tenant$categoriesArgs<ExtArgs>
   products?: boolean | Prisma.Tenant$productsArgs<ExtArgs>
   orders?: boolean | Prisma.Tenant$ordersArgs<ExtArgs>
-  members?: boolean | Prisma.Tenant$membersArgs<ExtArgs>
   _count?: boolean | Prisma.TenantCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TenantIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -712,13 +826,16 @@ export type $TenantPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     categories: Prisma.$CategoryPayload<ExtArgs>[]
     products: Prisma.$ProductPayload<ExtArgs>[]
     orders: Prisma.$OrderPayload<ExtArgs>[]
-    members: Prisma.$TenantMemberPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
     createdAt: Date
     updatedAt: Date
+    pinCodeHash: string
+    pinFailedAttempts: number
+    pinLockedUntil: Date | null
+    pinLockoutLevel: number
   }, ExtArgs["result"]["tenant"]>
   composites: {}
 }
@@ -1116,7 +1233,6 @@ export interface Prisma__TenantClient<T, Null = never, ExtArgs extends runtime.T
   categories<T extends Prisma.Tenant$categoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$categoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CategoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   products<T extends Prisma.Tenant$productsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$productsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   orders<T extends Prisma.Tenant$ordersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  members<T extends Prisma.Tenant$membersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$membersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TenantMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1150,6 +1266,10 @@ export interface TenantFieldRefs {
   readonly name: Prisma.FieldRef<"Tenant", 'String'>
   readonly createdAt: Prisma.FieldRef<"Tenant", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Tenant", 'DateTime'>
+  readonly pinCodeHash: Prisma.FieldRef<"Tenant", 'String'>
+  readonly pinFailedAttempts: Prisma.FieldRef<"Tenant", 'Int'>
+  readonly pinLockedUntil: Prisma.FieldRef<"Tenant", 'DateTime'>
+  readonly pinLockoutLevel: Prisma.FieldRef<"Tenant", 'Int'>
 }
     
 
@@ -1607,30 +1727,6 @@ export type Tenant$ordersArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.OrderScalarFieldEnum | Prisma.OrderScalarFieldEnum[]
-}
-
-/**
- * Tenant.members
- */
-export type Tenant$membersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the TenantMember
-   */
-  select?: Prisma.TenantMemberSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the TenantMember
-   */
-  omit?: Prisma.TenantMemberOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.TenantMemberInclude<ExtArgs> | null
-  where?: Prisma.TenantMemberWhereInput
-  orderBy?: Prisma.TenantMemberOrderByWithRelationInput | Prisma.TenantMemberOrderByWithRelationInput[]
-  cursor?: Prisma.TenantMemberWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.TenantMemberScalarFieldEnum | Prisma.TenantMemberScalarFieldEnum[]
 }
 
 /**

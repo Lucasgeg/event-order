@@ -14,7 +14,6 @@ import {
   UtensilsCrossed,
   ClipboardList,
   ChefHat,
-  Users,
   NotebookPen,
   Pencil,
   Trash2,
@@ -34,7 +33,6 @@ import {
   Input,
   Select,
   Label,
-  Badge,
   EmptyState,
   Segmented,
   Th,
@@ -43,8 +41,9 @@ import {
   cn,
 } from "../../components/ui";
 import { OrdersManager } from "../../components/OrdersManager";
+import { OrderForm } from "../../components/OrderForm";
 
-type AdminTab = "menu" | "products" | "orders" | "production" | "members";
+type AdminTab = "menu" | "products" | "orders" | "production";
 
 const NAV_ITEMS: {
   key: AdminTab;
@@ -76,12 +75,6 @@ const NAV_ITEMS: {
     description: "Consolidez les quantités à produire par jour ou période.",
     icon: ChefHat,
   },
-  {
-    key: "members",
-    label: "Membres",
-    description: "Invitez votre équipe et gérez les rôles.",
-    icon: Users,
-  },
 ];
 
 export default function AdminPage() {
@@ -103,23 +96,31 @@ export default function AdminPage() {
   } = useApp();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<AdminTab>("menu");
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
 
+  // Le PIN (docs/adr/0003-compte-unique-pin-admin.md) est déjà vérifié par
+  // le layout avant que cette page ne soit montée — il ne reste ici qu'à
+  // attendre le chargement du compte Clerk.
   useEffect(() => {
-    if (!isLoading) {
-      if (!user) {
-        router.push("/");
-      } else if (user.role !== "admin") {
-        router.push("/user");
-      }
+    if (!isLoading && !user) {
+      router.push("/");
     }
   }, [user, isLoading, router]);
-  if (isLoading || !user || user.role !== "admin") {
+  if (isLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-cream">
         <LoadingBlock />
       </div>
     );
   }
+
+  const handleLeaveAdmin = async () => {
+    try {
+      await fetch("/api/admin-session", { method: "DELETE" });
+    } finally {
+      router.push("/user");
+    }
+  };
 
   const activeItem = NAV_ITEMS.find((item) => item.key === activeTab)!;
 
@@ -182,7 +183,7 @@ export default function AdminPage() {
         </div>
         <div className="px-3 py-4 border-t border-line space-y-3">
           <button
-            onClick={() => router.push("/user")}
+            onClick={handleLeaveAdmin}
             className="flex items-center gap-3 w-full h-11 px-3 rounded-lg text-sm font-semibold text-ink-soft hover:bg-parchment hover:text-ink transition-colors duration-200 cursor-pointer"
           >
             <NotebookPen className="h-5 w-5" />
@@ -212,7 +213,7 @@ export default function AdminPage() {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => router.push("/user")}
+              onClick={handleLeaveAdmin}
               className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-semibold text-ink-soft hover:bg-parchment transition-colors cursor-pointer"
             >
               <NotebookPen className="h-4 w-4" />
@@ -280,14 +281,22 @@ export default function AdminPage() {
               deleteProduct={deleteProduct}
             />
           )}
-          {activeTab === "orders" && <OrdersManager />}
+          {activeTab === "orders" &&
+            (editingOrderId ? (
+              <OrderForm
+                variant="embedded"
+                orderId={editingOrderId}
+                onDone={() => setEditingOrderId(null)}
+              />
+            ) : (
+              <OrdersManager onEdit={setEditingOrderId} />
+            ))}
           {activeTab === "production" && (
             <ProductionManager
               categories={categories}
               subCategories={subCategories}
             />
           )}
-          {activeTab === "members" && <MembersManager />}
         </main>
       </div>
     </div>
@@ -1295,209 +1304,3 @@ function ProductionManager({
   );
 }
 
-function MembersManager() {
-  const confirmAction = useConfirm();
-  const [members, setMembers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"org:member" | "org:admin">(
-    "org:member",
-  );
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
-  const fetchMembers = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/members");
-      if (res.ok) {
-        const data = await res.json();
-        setMembers(data);
-      }
-    } catch (e) {
-      console.error(e);
-      toast.error("Impossible de charger les membres.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchMembers();
-  }, []);
-
-  const handleInvite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-
-    if (members.length >= 4) {
-      setError("La limite de 4 membres est atteinte.");
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/members", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setSuccess("Invitation envoyée avec succès.");
-        setInviteEmail("");
-        setInviteRole("org:member");
-        fetchMembers();
-      } else {
-        setError(data.error || "Erreur lors de l'invitation.");
-      }
-    } catch (e) {
-      setError("Erreur réseau.");
-    }
-  };
-
-  const handleRemove = async (userId: string) => {
-    const confirmed = await confirmAction({
-      title: "Supprimer ce membre ?",
-      description: "Cette action est irréversible.",
-      confirmLabel: "Supprimer",
-      variant: "destructive",
-    });
-    if (!confirmed) return;
-
-    try {
-      const res = await fetch("/api/members", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
-      if (res.ok) {
-        toast.success("Membre supprimé.");
-        fetchMembers();
-      } else {
-        const data = await res.json();
-        toast.error(data.error || "Erreur lors de la suppression.");
-      }
-    } catch {
-      toast.error("Erreur lors de la suppression.");
-    }
-  };
-
-  return (
-    <Card className="p-6">
-      <CardHeader
-        title="Gestion des membres"
-        description="Invitez jusqu'à 4 membres dans votre organisation."
-        action={<Badge tone="gold">{members.length} / 4 membres</Badge>}
-      />
-
-      <div className="mb-6">
-        <form
-          onSubmit={handleInvite}
-          className="flex flex-col sm:flex-row gap-3 sm:items-end"
-        >
-          <div className="flex-1">
-            <Label htmlFor="invite-email">Inviter un membre (email)</Label>
-            <Input
-              id="invite-email"
-              type="email"
-              required
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              placeholder="email@exemple.com"
-            />
-          </div>
-          <div className="sm:w-40">
-            <Label htmlFor="invite-role">Rôle</Label>
-            <Select
-              id="invite-role"
-              value={inviteRole}
-              onChange={(e) =>
-                setInviteRole(e.target.value as "org:member" | "org:admin")
-              }
-            >
-              <option value="org:member">Membre</option>
-              <option value="org:admin">Admin</option>
-            </Select>
-          </div>
-          <Button type="submit" disabled={members.length >= 4}>
-            Inviter
-          </Button>
-        </form>
-        {error && (
-          <p role="alert" className="text-danger text-sm mt-2">
-            {error}
-          </p>
-        )}
-        {success && (
-          <p role="status" className="text-olive-dark text-sm mt-2">
-            {success}
-          </p>
-        )}
-      </div>
-
-      {loading ? (
-        <LoadingBlock label="Chargement des membres..." />
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-line">
-          <table className="min-w-full divide-y divide-line">
-            <thead className="bg-parchment/60">
-              <tr>
-                <Th>Utilisateur</Th>
-                <Th>Email</Th>
-                <Th>Rôle</Th>
-                <Th className="text-right">Actions</Th>
-              </tr>
-            </thead>
-            <tbody className="bg-surface divide-y divide-line">
-              {members.map((member) => (
-                <tr
-                  key={member.id}
-                  className="hover:bg-cream/60 transition-colors"
-                >
-                  <Td className="whitespace-nowrap">
-                    <div className="flex items-center">
-                      {member.imageUrl && (
-                        <Image
-                          src={member.imageUrl}
-                          alt=""
-                          width={32}
-                          height={32}
-                          className="h-8 w-8 rounded-full mr-3"
-                        />
-                      )}
-                      <span className="font-semibold">
-                        {member.firstName} {member.lastName}
-                      </span>
-                    </div>
-                  </Td>
-                  <Td className="text-ink-soft whitespace-nowrap">
-                    {member.email}
-                  </Td>
-                  <Td className="whitespace-nowrap">
-                    <Badge
-                      tone={member.role === "org:admin" ? "gold" : "neutral"}
-                    >
-                      {member.role === "org:member" ? "Membre" : "Admin"}
-                    </Badge>
-                  </Td>
-                  <Td className="text-right whitespace-nowrap">
-                    {member.role !== "org:admin" && (
-                      <IconButton
-                        label={`Supprimer ${member.firstName} ${member.lastName}`}
-                        tone="danger"
-                        onClick={() => handleRemove(member.userId)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </IconButton>
-                    )}
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </Card>
-  );
-}

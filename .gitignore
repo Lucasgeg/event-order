@@ -39,6 +39,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# .env.test contient uniquement des identifiants Postgres locaux fixes
+# (docker-compose.yml) — pas de secret réel, on le commite pour que
+# `bun run test:integration` marche sans setup manuel.
+!.env.test
 
 # vercel
 .vercel
